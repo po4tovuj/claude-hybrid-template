@@ -32,32 +32,37 @@ This file provides guidance to Claude Code when working with code in this reposi
 ### Spec-Driven Development Flow
 
 ```
-/setup-wizard  →  /constitute  →  /specify  →  /breakdown  →  /execute-task  →  /verify
-   (once)          (once)        (per feature)   (auto)        (per task)       (per task)
+/setup-wizard → /constitute → /clarify → /specify → /plan → /breakdown → /execute-task → /verify
+   (once)         (once)      (optional)  (per feature)         (auto)      (per task)     (per task)
 ```
 
+### `/clarify "feature description"` (optional)
+Scans requirements against 9 ambiguity categories, asks up to 5 multiple-choice questions. Saves decisions to `specs/[feature]/clarifications.md`. Use when requirements are vague.
+
 ### `/specify "feature description"`
-Creates a structured specification with acceptance criteria. Asks clarifying questions, analyzes affected code, saves spec to `specs/`. **Requires approval before proceeding.**
+Creates a structured specification with acceptance criteria. Analyzes affected code, saves spec to `specs/[feature]/spec.md`. **Requires approval before proceeding.**
+
+### `/plan [spec-file]`
+Takes an approved spec and produces a technical plan: architecture decisions, data model, API contracts, research. Saves to `specs/[feature]/plan.md`. **Requires approval before breakdown.**
 
 ### `/breakdown [spec-file]`
-Takes an approved spec and generates ordered, atomic tasks with dependencies and agent assignments. Saves to `todo/`. **Requires approval before execution.**
+Takes an approved plan and generates ordered, atomic tasks with dependencies and agent assignments. Saves to `specs/[feature]/tasks/`. **Requires approval before execution.**
 
 ### `/execute-task [number]`
 Executes a single task from the breakdown using the assigned specialized agent. Follows enforced workflow:
-1. Pre-flight check (constitution, memory, file state)
+1. Pre-flight check (constitution, memory, docs, file state)
 2. Agent execution with scope constraints
 3. Post-execution verification (tsc, lint, done conditions)
-4. Memory update
+4. Documentation update (tech-writer agent)
+5. Memory update
 
 ### `/verify [spec-file]`
 Verifies all completed tasks against the spec's acceptance criteria. Performs code review against constitution rules. Updates memory with lessons learned.
 
 ### `/constitute`
-One-time deep codebase analysis that generates `constitution.md` — non-negotiable rules, architecture decisions, patterns.
+One-time deep codebase analysis (or interview for greenfield projects) that generates `constitution.md` — non-negotiable rules, architecture decisions, patterns.
 
 ### Additional Commands
-
-These commands can be used independently of the spec-driven flow:
 
 - `/setup-wizard` — Re-run initial project setup (regenerates config files)
 
@@ -70,7 +75,8 @@ These commands can be used independently of the spec-driven flow:
 ## Enforced Quality Gates
 
 ### Hard Gates (block until approved)
-- Spec approval → before `/breakdown` can run
+- Spec approval → before `/plan` can run
+- Plan approval → before `/breakdown` can run
 - Task breakdown approval → before `/execute-task` can start
 - Acceptance criteria → verified in `/verify`
 
@@ -81,18 +87,61 @@ These commands can be used independently of the spec-driven flow:
 
 ## Key Rules
 
+### Always
 1. **Read before write** — always read files before modifying them
 2. **Constitution is law** — `constitution.md` rules override everything except user instructions
 3. **Minimal changes** — every change should impact as little code as possible
 4. **Memory is persistent** — check `.claude/memory/MEMORY.md` for lessons from past sessions
-5. **Specs are contracts** — once a spec is approved, implementation must satisfy every acceptance criterion
+5. **Specs are contracts** — once approved, implementation must satisfy every acceptance criterion
 6. **One task at a time** — execute tasks sequentially following the dependency graph
 7. **Document new code** — all new functions/variables must have clear documentation
-8. **Lint everything** — ESLint/linting must pass on all changed files before task completion
+8. **Lint everything** — linting must pass on all changed files before task completion
+9. **Handle both paths** — every fallible operation must handle success AND error cases
+10. **Validate at boundaries** — validate external input (user input, API responses, env vars); trust internal code
+11. **SOLID, DRY, KISS** — single responsibility, don't repeat logic 3+ times, keep it simple
+12. **Search before building** — before writing anything generic/reusable, search the codebase for existing utilities, helpers, or components that already do it
+
+### Never
+1. **Never swallow errors** — empty catch blocks are forbidden; handle, re-throw, or log with reason
+2. **Never commit secrets** — no API keys, tokens, or credentials in code
+3. **Never commit debug artifacts** — no console.log, debugger, print() left behind
+4. **Never leave bare TODOs** — every TODO must have context and a reference
+5. **Never modify outside scope** — do not "fix" unrelated code you happen to see
+6. **Never guess** — if unsure how code works, read it; if unsure what user wants, ask
+
+## Artifact Storage
+
+```
+specs/
+  001-feature-name/            # Numbered feature directories
+    spec.md                    # /specify output
+    clarifications.md          # /clarify output (optional)
+    plan.md                    # /plan output
+    research.md                # /plan research (optional)
+    data-model.md              # /plan data model (optional)
+    contracts.md               # /plan API contracts (optional)
+    tasks/                     # /breakdown output
+      README.md                # Task index with dependency graph
+      001-define-types.md      # Individual task files
+      002-create-repo.md
+      003-build-component.md
+
+docs/
+  overview.md                  # Project overview
+  architecture.md              # Architecture and patterns
+  features/                    # Feature docs (one file per area)
+  api/                         # API docs (one file per resource)
+  guides/                      # How-to guides
+```
+
+- Feature dirs: `NNN-kebab-name`, sequential numbering (001, 002, ...)
+- Task files: `NNN-short-title.md`, sequential within feature
+- Everything for a feature lives in one directory
+- Docs are organized by topic (not by task/date) in `docs/`
+- See `.claude/templates/storage-rules.md` for full conventions
 
 ## References
 
 - [Constitution](constitution.md) — Project rules and patterns
-- [Specs](specs/) — Feature specifications
-- [Tasks](todo/) — Task breakdowns
+- [Specs](specs/) — Feature specifications, plans, and tasks
 - [Memory](/.claude/memory/MEMORY.md) — Persistent learnings

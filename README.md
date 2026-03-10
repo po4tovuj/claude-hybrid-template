@@ -4,68 +4,95 @@ A spec-driven development template for Claude Code that combines structured spec
 
 ## Philosophy
 
-**Spec-kit's intake** (spec → plan → tasks) for scoping + **enforced execution** (approve → implement → verify) for quality.
+Your workflow's **hard gates, specialized agents, and automated hooks** as the foundation. Spec-kit's **structured intake** (clarify → specify → plan → tasks) layered on top for scoping quality.
 
 Every phase transition requires explicit user approval. No step can be skipped.
 
 ## Installation
 
-1. Copy the `.claude/` directory to your project root:
-   ```bash
-   cp -r /path/to/claude-hybrid-template/.claude /path/to/your-project/
-   ```
+```bash
+/path/to/claude-hybrid-template/install.sh /path/to/your-project
+```
 
-2. Copy the `specs/` and `todo/` directories:
-   ```bash
-   cp -r /path/to/claude-hybrid-template/specs /path/to/your-project/
-   cp -r /path/to/claude-hybrid-template/todo /path/to/your-project/
-   ```
+This copies `.claude/`, `specs/`, `scripts/`, and `.mcp.json` into your project. Then open it in Claude Code and run `/setup-wizard`.
 
-3. Open your project in Claude Code and run the setup wizard:
-   ```
-   /setup-wizard
-   ```
-
-4. The wizard will:
-   - Detect your project structure automatically
+The wizard will:
+   - Detect your project structure (or interview you for greenfield projects)
    - Ask clarifying questions about your stack
    - Generate `CLAUDE.md`, `constitution.md`, agents, hooks, and memory
    - Remove the templates directory when done
 
+### MCP Servers
+
+The template includes two pre-configured MCP servers in `.mcp.json`:
+
+- **Context7** — Fetches up-to-date documentation for libraries and frameworks directly into context. Powered by `@upstash/context7-mcp`. No setup required — runs via `npx`.
+- **Chrome DevTools** — Connects to WebStorm's Chrome debugger for taking screenshots and evaluating scripts in the browser. Requires WebStorm JS debugger to be running. The script at `scripts/chrome-devtools-mcp.sh` auto-detects the debugging port.
+
+Both servers are enabled by default in the settings template. Permissions for their tools (`take_screenshot`, `evaluate_script`, `resolve-library-id`, `get-library-docs`) are pre-allowed.
+
 ## Workflow
 
 ```
-/setup-wizard  →  /constitute  →  /specify  →  /breakdown  →  /execute-task  →  /verify
-   (once)          (once)        (per feature)   (auto)        (per task)       (per task)
+/setup-wizard → /constitute → /clarify → /specify → /plan → /breakdown → /execute-task → /verify
+   (once)         (once)      (optional) (per feat)                        (per task)     (per task)
 ```
 
 ### Phase 0: `/setup-wizard` (one-time)
-Interactive wizard that adapts the template to your project. Detects frameworks, testing tools, linting, architecture patterns, and generates all configuration files.
+Interactive wizard that adapts the template to your project. Auto-detects stack for existing codebases, interviews you for greenfield projects. Generates all config files.
 
 ### Phase 1: `/constitute` (one-time)
-Deep codebase analysis that produces `constitution.md` — your project's non-negotiable rules, architecture decisions, and quality standards. Persists across all sessions.
+Deep codebase analysis (existing projects) or preference-based interview (greenfield) that produces `constitution.md` — non-negotiable rules, architecture decisions, patterns. Persists across sessions.
 
-### Phase 2: `/specify "feature description"` (per feature)
-Takes a natural language feature request, asks clarifying questions, and produces a structured specification with acceptance criteria. Saved to `specs/`.
+### Phase 2: `/clarify "feature description"` (optional, per feature)
+Scans requirements against 9 ambiguity categories, asks up to 5 multiple-choice questions with recommendations. Saves to `specs/[feature]/clarifications.md`. Skip if requirements are already clear.
 
-### Phase 3: `/breakdown` (automatic after specify)
-Takes an approved spec and breaks it into ordered, atomic tasks with dependencies and agent assignments. Saved to `todo/`.
+### Phase 3: `/specify "feature description"` (per feature)
+Produces a structured specification with acceptance criteria, scope boundaries, and risk assessment. Saves to `specs/[feature]/spec.md`. **Requires approval.**
 
-### Phase 4: `/execute-task [number]` (per task)
-Picks up a task from the breakdown, selects the right specialized agent, and follows the enforced execution workflow with automated quality checks.
+### Phase 4: `/plan` (per feature)
+Takes an approved spec and produces a technical plan: architecture decisions, data model, API contracts, research findings. Saves to `specs/[feature]/plan.md`. **Requires approval.**
 
-### Phase 5: `/verify` (per task)
-Code review against the original spec's acceptance criteria, cross-referenced with constitution rules. Updates persistent memory with lessons learned.
+### Phase 5: `/breakdown` (per feature)
+Takes an approved plan and generates ordered, atomic tasks with dependencies and agent assignments. Saves to `specs/[feature]/tasks/`. **Requires approval.**
+
+### Phase 6: `/execute-task [number]` (per task)
+Picks up a task, reads relevant docs for context, selects the assigned agent, executes with scope constraints, verifies with automated hooks, then the tech-writer agent updates `docs/` with any changes.
+
+### Phase 7: `/verify` (per feature)
+Code review against the spec's acceptance criteria, cross-referenced with constitution rules. Updates persistent memory with lessons learned.
+
+## Artifact Storage
+
+```
+specs/
+  001-user-auth/                 # Numbered feature directories
+    spec.md                      # /specify output
+    clarifications.md            # /clarify output (optional)
+    plan.md                      # /plan output
+    research.md                  # /plan research (optional)
+    data-model.md                # /plan entities (optional)
+    contracts.md                 # /plan API contracts (optional)
+    tasks/                       # /breakdown output
+      README.md                  # Task index + dependency graph
+      001-define-types.md        # Individual task files
+      002-create-repository.md
+      003-build-login-form.md
+```
+
+- Feature dirs: `NNN-kebab-name` — sequential numbering (001, 002, ...)
+- Task files: `NNN-short-title.md` — sequential within feature
+- Everything for a feature lives in one directory
+- Full storage rules in `.claude/templates/storage-rules.md`
 
 ## Hard Gates
-
-Every phase transition blocks for user approval:
 
 | Transition | Gate |
 |-----------|------|
 | setup-wizard → constitute | User confirms generated config |
 | constitute → specify | User approves constitution |
-| specify → breakdown | User approves spec |
+| specify → plan | User approves spec |
+| plan → breakdown | User approves technical plan |
 | breakdown → execute | User approves task list |
 | execute → verify | Automated hooks must pass |
 | verify → done | User confirms acceptance criteria met |
@@ -77,16 +104,44 @@ Every phase transition blocks for user approval:
 - **Agent specialization**: Domain-specific agents, not generic ones
 - **Minimal changes rule**: Every task touches as little code as possible
 - **Mandatory linting**: Must pass before task completion
+- **Constitution compliance**: Checked in pre-flight before every task
+- **9-category ambiguity scan**: Catches requirement gaps before implementation
+
+## Pre-Populated Universal Rules
+
+The constitution template comes with universal rules that apply to ALL projects regardless of language or framework. These are ready out of the box — no `/constitute` needed:
+
+**Code Quality**: No dead code, no debug artifacts, no magic values, one function one job, early returns, keep functions short, consistent style within files.
+
+**ALWAYS**: Read before write, handle both success and error paths, validate at boundaries, name things for what they are, test assumptions.
+
+**NEVER**: Swallow errors silently, commit secrets, leave bare TODOs, modify outside task scope, guess at behavior.
+
+**PREFER**: Explicit over implicit, composition over inheritance, flat over nested, boring over clever, existing patterns over new ones, small PRs over large.
+
+**Workflow**: Minimal changes, semantic understanding before renaming, read-first principle, document new code, check constitution and memory before every task.
+
+Project-specific rules (architecture, naming conventions, type safety, testing, domain rules) are populated by `/constitute`.
+
+## Greenfield Support
+
+Works with empty/new projects:
+- `/setup-wizard` interviews you about intended stack instead of scanning code
+- `/constitute` builds constitution from user preferences + framework best practices
+- `/specify` creates specs even when there's no existing code to reference
+- `/plan` follows the constitution's scaffolding guide for file placement
+- `/breakdown` includes infrastructure tasks (create directories, install packages)
 
 ## Customization
 
-After running `/setup-wizard`, you can manually edit:
+After running `/setup-wizard`:
 - `.claude/agents/*.md` — Add domain-specific knowledge
 - `.claude/memory/MEMORY.md` — Pre-seed with known patterns
 - `CLAUDE.md` — Adjust workflow steps
 - `constitution.md` — Add project-specific rules
 - `.claude/settings.json` — Modify hooks and plugins
+- `docs/` — Project documentation, updated automatically by tech-writer agent after each task (along with inline JSDoc/docstrings in source files)
 
 ## Template Files
 
-The `.claude/templates/` directory contains raw templates with `{{PLACEHOLDER}}` variables. These are consumed by `/setup-wizard` and can be deleted after setup.
+The `.claude/templates/` directory contains raw templates with `{{PLACEHOLDER}}` variables. Consumed by `/setup-wizard` and can be deleted after setup.

@@ -12,21 +12,26 @@ Takes an approved specification and breaks it into ordered, atomic tasks with de
 
 ## Prerequisites
 
-1. A spec file must exist in `specs/` with **Status: Approved**
-2. If the spec status is still "Draft", inform the user: "This spec hasn't been approved yet. Please review `specs/[file]` and change the status to 'Approved', or run `/specify` to create a new spec."
+1. A spec must exist in `specs/[feature-name]/spec.md` with **Status: Approved**
+2. A plan must exist in `specs/[feature-name]/plan.md` with **Status: Approved**
+3. If the spec is not approved: "Run `/specify` first, then get it approved."
+4. If the plan is not approved: "Run `/plan` first, then get it approved."
 
 ## PHASE 1: Load Context
 
 Read these files in order:
-1. The spec file (from `$ARGUMENTS` or most recent in `specs/`)
-2. `constitution.md` — architecture rules and constraints
-3. `.claude/memory/MEMORY.md` — past lessons
-4. `CLAUDE.md` — project structure and available agents
+1. The feature's `spec.md` (from `$ARGUMENTS` or most recent feature directory in `specs/`)
+2. The feature's `plan.md` — technical decisions and file impact
+3. The feature's supporting docs if they exist: `research.md`, `data-model.md`, `contracts.md`
+4. `constitution.md` — architecture rules and constraints
+5. `.claude/memory/MEMORY.md` — past lessons
+6. `CLAUDE.md` — project structure and available agents
 
-Verify the spec status is "Approved". If not, stop and inform the user.
+Verify both spec AND plan are approved. If not, stop and inform the user.
 
 ## PHASE 2: Deep File Analysis
 
+### If existing codebase:
 For every file listed in the spec's "Affected Areas" section:
 1. **Read the file** completely
 2. **Map its dependencies**: What does it import? What imports it?
@@ -35,6 +40,21 @@ For every file listed in the spec's "Affected Areas" section:
 5. **Check for cascading effects**: Will changing this file require changes in other files not listed in the spec?
 
 If you discover files that should have been in the spec but weren't, note them as additions.
+
+### If greenfield (creating new files):
+For every file listed in the spec's "Affected Areas" section:
+1. **Check if the file exists** — if not, this is a "create" task
+2. **Read the constitution's scaffolding guide** — verify the file will be in the correct directory per the architecture rules
+3. **Identify the pattern reference** — find the closest pattern example from the constitution's Section 7.2
+4. **Map required dependencies** — what types, interfaces, or modules must be created first?
+5. **Check for infrastructure needs** — does this feature need new directories, config changes, or package installations?
+
+**Greenfield task ordering is different** — instead of "types first, then core, then UI", it's:
+1. **Infrastructure** — create directories, install packages, add config
+2. **Types/interfaces** — define the data shapes
+3. **Core logic** — domain/business logic, use cases, repositories
+4. **Presentation** — UI components, views, routes
+5. **Integration** — wire everything together (DI, routing, store registration)
 
 ## PHASE 3: Generate Task Breakdown
 
@@ -63,6 +83,10 @@ Assign each task to the most appropriate agent based on the files it touches:
 | UI components, styles, routes, composables, stores | frontend-engineer |
 | Both core + UI (tightly coupled change) | architect first, then frontend-engineer |
 | Bug investigation with runtime symptoms | runtime-debugger |
+| Performance-critical path or optimization task | performance-analyst |
+| Auth, secrets, input validation, security hardening | security-reviewer |
+
+**Note**: `performance-analyst` and `security-reviewer` also run automatically during `/verify` on all changed files. Assign them to individual tasks only when the task itself is primarily about performance or security work.
 
 ### Task Format
 
@@ -97,43 +121,56 @@ For each task, generate:
 
 ## PHASE 4: Save the Breakdown
 
-Save the task breakdown to `todo/DD-MM-YYYY-HH-MM-[spec-name].md` (Ukrainian timezone).
+Create the `tasks/` directory inside the feature's spec directory and save each task as a separate numbered file.
 
-### Breakdown File Format:
+### Output Structure
+
+Create `specs/NNN-feature/tasks/` directory. For each task, create a separate file:
+
+```
+specs/NNN-feature/tasks/
+  001-short-title.md
+  002-short-title.md
+  003-short-title.md
+```
+
+Each task file follows the format defined in `.claude/templates/storage-rules.md`.
+
+Also create a `specs/NNN-feature/tasks/README.md` index file:
 
 ```markdown
-# Task Breakdown: [Feature Name]
+# Tasks: [Feature Name]
 
-**Spec**: [path to spec file]
+**Spec**: [path to spec.md]
+**Plan**: [path to plan.md]
 **Generated**: [date and time]
 **Total tasks**: [count]
-**Estimated total files**: [count]
 
 ## Dependency Graph
 
-[Simple text representation showing task order]
 ```
-Task 1 (types) ──→ Task 2 (core) ──→ Task 4 (UI)
-                ──→ Task 3 (core) ──→ Task 4 (UI)
-                                  ──→ Task 5 (cleanup)
+001 (types) ──→ 002 (core) ──→ 004 (UI)
+             ──→ 003 (core) ──→ 004 (UI)
+                             ──→ 005 (cleanup)
 ```
 
-## Tasks
+## Task Index
 
-### Task 1: ...
-### Task 2: ...
-...
+| # | Title | Agent | Depends on | Status |
+|---|-------|-------|-----------|--------|
+| 001 | [title] | [agent] | None | Pending |
+| 002 | [title] | [agent] | 001 | Pending |
+| ... | ... | ... | ... | ... |
 
 ## Additions to Spec
 
-[Any files or changes discovered during analysis that weren't in the original spec]
-[These should be minor — if major gaps exist, suggest updating the spec first]
+[Files or changes discovered that weren't in the original spec]
 
 ## Risk Assessment
 
 | Task | Risk | Reason |
 |------|------|--------|
-| Task N | High/Med/Low | [why] |
+| 001 | Low/Med/High | [why] |
 ```
 
 ## PHASE 5: User Approval
@@ -142,7 +179,7 @@ Task 1 (types) ──→ Task 2 (core) ──→ Task 4 (UI)
 
 Present a summary:
 
-"I've broken down the spec into **[N] tasks**:
+"I've broken down the spec into **[N] tasks** at `specs/[NNN-feature]/tasks/`:
 
 [List each task: number, title, agent, and dependency info — one line each]
 
@@ -150,12 +187,12 @@ Dependency chain: [simplified graph]
 
 Riskiest tasks: [list high-risk tasks and why]
 
-Please review `todo/[filename].md` and approve. You can:
-1. Approve as-is → run `/execute-task 1` to start
-2. Request changes → I'll update the breakdown
-3. Reject → I'll revisit the spec
+Please review the task files. You can:
+1. Approve as-is → run `/execute-task 001` to start
+2. Request changes → I'll update the tasks
+3. Reject → I'll revisit the plan
 
-Once approved, tasks should be executed in order (dependencies are marked)."
+Tasks should be executed in order (dependencies are marked)."
 
 ## IMPORTANT RULES
 

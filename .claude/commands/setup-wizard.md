@@ -2,9 +2,26 @@
 
 You are running the initial setup wizard for the Claude Hybrid Template. Your job is to analyze the current project, ask the user targeted questions, and generate all configuration files.
 
+## STEP 0: Greenfield Detection
+
+Before scanning, check if this is a new/empty project:
+1. Count source files (exclude `node_modules`, `.git`, `dist`, `build`, config files at root)
+2. If **0-5 source files** (or only scaffold boilerplate from `create-vite`, `create-next-app`, `npm init`, etc.), this is a **GREENFIELD PROJECT**
+3. If **6+ meaningful source files**, this is an **EXISTING PROJECT**
+
+**If greenfield:**
+- Skip auto-detection of architecture patterns, error handling patterns, and state management (there's no code to scan)
+- Still check for `package.json`, `tsconfig.json`, and config files (these exist even in scaffolds)
+- In Step 2, ask MORE questions since there's less to auto-detect
+- In Step 3, use framework best practices for defaults instead of extracted patterns
+- When generating CLAUDE.md, use the constitution's scaffolding section for project structure
+- When generating agents, use framework-idiomatic patterns instead of project-specific ones
+
+Inform the user: "This appears to be a [new/existing] project. I'll [ask you about your intended stack / analyze your existing codebase] to set things up."
+
 ## STEP 1: Auto-Detect Project Structure
 
-Silently scan the project to detect as much as possible before asking questions. Look for:
+Silently scan the project to detect as much as possible before asking questions. For greenfield projects, only scan config files. For existing projects, scan everything. Look for:
 
 **Package managers & monorepo:**
 - `package.json` → npm/yarn/pnpm, check `workspaces` field
@@ -100,7 +117,8 @@ Use AskUserQuestion for each category. Batch related questions. Example flow:
 (show what you detected, let them adjust)
 
 ### Question 3: Architecture Pattern
-"I see [pattern indicators]. Which architecture pattern does this project follow?"
+**Existing**: "I see [pattern indicators]. Which architecture pattern does this project follow?"
+**Greenfield**: "Which architecture pattern do you want to follow?"
 - Clean Architecture (layers: data, domain, presentation)
 - MVC/MVVM
 - Feature-based/Modular
@@ -108,7 +126,8 @@ Use AskUserQuestion for each category. Batch related questions. Example flow:
 - Other (describe)
 
 ### Question 4: Error Handling Strategy
-"I found [pattern indicators]. How does this project handle errors?"
+**Existing**: "I found [pattern indicators]. How does this project handle errors?"
+**Greenfield**: "How should this project handle errors?"
 - Either/Result monads (purify-ts, fp-ts, neverthrow)
 - Try/catch with custom error types
 - Traditional try/catch
@@ -154,20 +173,44 @@ Replace ALL placeholders:
 
 Fill the commands section with REAL commands from the project's `package.json` scripts (or `Makefile`, `pyproject.toml`, etc.). Do NOT use placeholder commands.
 
+**Greenfield note**: If no scripts exist yet (empty `package.json`), generate sensible defaults based on the chosen framework and build tool (e.g., `vite dev`, `vitest`, `eslint .`). Mark them with a comment: `<!-- default, update after scaffolding -->`.
+
 ### 3.2: Generate Agents
 
 Read agent templates from `.claude/templates/agents/` and generate `.claude/agents/`.
 
-**Decide which agents to create based on project type:**
+**Decide which agents to create based on project type and detected stack:**
 
-| Project Type | Agents |
-|-------------|--------|
-| Frontend | frontend-engineer, runtime-debugger |
-| Backend | architect, runtime-debugger |
-| Fullstack | frontend-engineer, architect, runtime-debugger |
-| Library | architect |
+#### Always included (all project types):
+| Agent | Why |
+|-------|-----|
+| `code-reviewer` | Every project needs code review |
+| `qa-engineer` | Every project needs tests |
+| `runtime-debugger` | Every project has runtime bugs |
+| `tech-writer` | Every project needs documentation |
+
+#### By project type:
+| Condition | Agents |
+|-----------|--------|
+| Frontend detected | `frontend-engineer` |
+| Backend framework detected (Express, NestJS, FastAPI, etc.) | `backend-engineer` |
+| Core/library without backend framework | `architect` (instead of backend-engineer) |
+| Both frontend + backend | `frontend-engineer` + `backend-engineer` + `architect` |
+| Library/package | `architect` |
+
+#### By detected stack (conditional):
+| Condition | Agent |
+|-----------|-------|
+| Database detected (prisma, typeorm, sequelize, mongoose, knex, drizzle, SQLAlchemy, etc.) | `db-engineer` |
+| Docker/CI detected (Dockerfile, .github/workflows/, .gitlab-ci.yml) | `devops-engineer` |
+| Frontend project with styling framework | `design-auditor` |
+| API project (REST or GraphQL) | `api-designer` |
+| Frontend or API project | `performance-analyst` |
+| Existing codebase with deprecated code or migration keywords in recent commits | `migration-engineer` |
+| `security-reviewer` | Include when: auth library detected (passport, okta, auth0, next-auth), OR backend with API endpoints, OR user explicitly requests it. Skip for: simple frontend-only projects with no auth |
 
 For each agent:
+- **Preserve ALL template content** — do NOT condense, simplify, or remove sections from the template. The templates contain carefully designed workflows, steps, and rules that must survive into the generated agent files intact
 - Replace `{{FRAMEWORK}}` with actual framework
 - Replace `{{LANGUAGE}}` with actual language
 - Replace `{{ARCHITECTURE}}` with actual architecture pattern
@@ -176,8 +219,11 @@ For each agent:
 - Replace `{{TESTING}}` with actual test framework
 - Replace `{{LINT_CONFIG}}` with actual linting setup
 - Replace `{{STYLING}}` with actual CSS approach
-- Add project-specific patterns you discovered during detection
+- Add project-specific patterns you discovered during detection (existing projects) or framework best-practice patterns (greenfield) — add these as NEW sections or append to existing sections, never replace template content
 - Set appropriate model: `opus` for runtime-debugger, `sonnet` for others
+- **Greenfield**: Use framework-idiomatic examples in agents since there's no project code to reference yet
+
+**CRITICAL**: The generated agent file = full template content + placeholder replacements + project-specific additions. Never subtract from the template.
 
 ### 3.3: Generate settings.json
 
@@ -205,6 +251,22 @@ Pre-populate with:
 
 Generate `constitution.md` at project root with a header and a note that it will be fully populated when `/constitute` is run. Include the project type and framework as initial metadata.
 
+### 3.6: Create docs/ folder
+
+Create the documentation directory structure:
+```
+docs/
+  overview.md              # Stub with project name and "TODO: populate after /constitute"
+  architecture.md          # Stub with "TODO: populate after /constitute"
+  features/                # Empty directory (created with .gitkeep)
+  api/                     # Empty directory (created with .gitkeep) — only if API project
+  guides/                  # Empty directory (created with .gitkeep)
+```
+
+For **existing projects**: If a `docs/` directory already exists, do NOT overwrite it. Warn the user and skip this step.
+
+For **greenfield projects**: Create the stubs. The tech-writer agent will populate them as features are built.
+
 ## STEP 4: Cleanup & Summary
 
 1. Ask the user: "Setup is complete. Should I remove the `.claude/templates/` directory? (It's no longer needed but can be kept for re-running the wizard.)"
@@ -221,7 +283,7 @@ Generate `constitution.md` at project root with a header and a note that it will
 - .claude/memory/MEMORY.md — Persistent memory (pre-seeded)
 - constitution.md — Constitution stub (run /constitute to populate)
 - specs/ — Feature specifications directory
-- todo/ — Task breakdowns directory
+- docs/ — Project documentation directory
 
 ### Detected Stack:
 - Type: [type]

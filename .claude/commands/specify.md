@@ -40,6 +40,7 @@ Based on the description, identify ambiguities and ask clarifying questions. Use
 
 ## PHASE 3: Codebase Analysis
 
+### If existing codebase:
 Search the codebase to understand the current state of affected areas:
 
 1. **Find affected files**: Use Glob and Grep to locate all files related to the feature
@@ -48,9 +49,20 @@ Search the codebase to understand the current state of affected areas:
 4. **Identify patterns**: How are similar features currently implemented?
 5. **Check for pitfalls**: Cross-reference with MEMORY.md for known issues in this area
 
+### If greenfield (few or no source files yet):
+Since there's little or no existing code:
+
+1. **Read the constitution** — especially Section 7 (Scaffolding Guide) for directory structure and pattern references
+2. **Identify what needs to be CREATED** — list the new files/modules this feature requires
+3. **Check the constitution's pattern references** — use those as the starting templates
+4. **Reference framework docs** — use WebSearch if needed for framework-specific best practices for this feature type
+5. **Check MEMORY.md** — for any lessons from previous features in this project
+
+**Key difference**: In the spec, "Section 2: Current Behavior" should describe "Current State" instead — what exists so far (even if nothing) and what the scaffolding guide says about where this feature should live.
+
 ## PHASE 4: Write the Specification
 
-Generate a structured spec and save it to `specs/YYYY-MM-DD-[feature-name].md` using Ukrainian timezone for the date.
+Generate a feature name (lowercase kebab-case, 2-4 words). Determine the next sequential number by scanning existing `specs/` directories for the highest `NNN` prefix. Create `specs/NNN-feature-name/` and save the spec to `specs/NNN-feature-name/spec.md`.
 
 ### Spec Format:
 
@@ -65,10 +77,10 @@ Generate a structured spec and save it to `specs/YYYY-MM-DD-[feature-name].md` u
 
 [2-3 sentence description of what this feature does and why it's needed]
 
-## 2. Current Behavior
+## 2. Current State
 
-[Describe how the system currently works in the affected area]
-[Include file paths and line numbers for key code]
+[Existing codebase: Describe how the system currently works in the affected area. Include file paths and line numbers.]
+[Greenfield: Describe what exists so far (may be nothing). Reference the constitution's scaffolding guide for where this feature should be built.]
 
 ## 3. Desired Behavior
 
@@ -125,19 +137,20 @@ Each criterion must be testable and unambiguous:
 
 Present the spec summary to the user:
 
-"I've created the specification at `specs/[filename].md`. Key points:
+"I've created the specification at `specs/NNN-[feature-name]/spec.md`. Key points:
 - **What changes**: [1-2 sentences]
 - **Files affected**: [count] files across [areas]
 - **Acceptance criteria**: [count] testable criteria
 - **Out of scope**: [key exclusions]
 
-Please review and either approve or request changes. Once approved, run `/breakdown` to generate tasks."
+Please review and either approve or request changes. Once approved, run `/plan` to create the technical implementation plan."
 
 ## IMPORTANT RULES
 
 1. **Specs are contracts** — once approved, the implementation must satisfy every acceptance criterion
 2. **Be exhaustive on "out of scope"** — this prevents the most common problem (scope creep)
 3. **Every AC must be testable** — "improved UX" is not testable, "modal closes after successful save" is
-4. **Reference specific files** — use `path/to/file.ts:line` format so the developer can navigate directly
+4. **Reference specific files** — use `path/to/file.ts:line` format for existing code. For greenfield, reference the constitution's directory structure for where files should be created
 5. **Check MEMORY.md** — if similar work was done before, reference what went right/wrong
 6. **Don't propose solutions** — the spec describes WHAT, not HOW. Solutions come in `/breakdown`
+7. **Greenfield: include scaffolding needs** — if the feature requires creating directory structure, types, or foundational modules that don't exist yet, list them in the "Affected Areas" table with Impact = "Create new"
