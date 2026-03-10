@@ -1,0 +1,143 @@
+# /specify — Feature Specification
+
+Create a structured specification for a feature or change. This command takes a natural language description and produces an unambiguous, reviewable spec.
+
+## Usage
+```
+/specify "feature description here"
+```
+
+## Arguments
+- `$ARGUMENTS` — The feature description provided by the user. If empty, ask the user to describe what they want.
+
+## PHASE 1: Understand the Request
+
+Read the user's description from `$ARGUMENTS`.
+
+Before doing ANY analysis, read these files for context:
+1. `constitution.md` — project rules and patterns
+2. `.claude/memory/MEMORY.md` — past lessons and known pitfalls
+3. `CLAUDE.md` — project structure and commands
+
+## PHASE 2: Clarify Requirements
+
+Based on the description, identify ambiguities and ask clarifying questions. Use AskUserQuestion to ask 2-4 focused questions.
+
+**Common clarification areas:**
+
+1. **Scope boundaries**: "Should this also affect [related area], or just [specific area]?"
+2. **Edge cases**: "What should happen when [edge case]?"
+3. **Existing behavior**: "Currently [X] works like [this]. Should it change or stay the same?"
+4. **UI/UX details**: "Should there be a loading state? Error message? Confirmation dialog?"
+5. **Data flow**: "Where should this data come from? [Option A] or [Option B]?"
+6. **Breaking changes**: "This might affect [existing feature]. Is that acceptable?"
+
+**Rules for clarification:**
+- Only ask questions you CANNOT answer by reading the codebase
+- Group related questions into one AskUserQuestion call
+- Never ask more than 4 questions total
+- If the description is clear enough, skip to Phase 3
+
+## PHASE 3: Codebase Analysis
+
+Search the codebase to understand the current state of affected areas:
+
+1. **Find affected files**: Use Glob and Grep to locate all files related to the feature
+2. **Read key files**: Read the most important files (components, stores, types, API calls)
+3. **Map dependencies**: Understand what depends on what
+4. **Identify patterns**: How are similar features currently implemented?
+5. **Check for pitfalls**: Cross-reference with MEMORY.md for known issues in this area
+
+## PHASE 4: Write the Specification
+
+Generate a structured spec and save it to `specs/YYYY-MM-DD-[feature-name].md` using Ukrainian timezone for the date.
+
+### Spec Format:
+
+```markdown
+# Spec: [Feature Name]
+
+**Date**: [YYYY-MM-DD]
+**Status**: Draft | Approved | In Progress | Complete
+**Author**: Claude + [User]
+
+## 1. Overview
+
+[2-3 sentence description of what this feature does and why it's needed]
+
+## 2. Current Behavior
+
+[Describe how the system currently works in the affected area]
+[Include file paths and line numbers for key code]
+
+## 3. Desired Behavior
+
+[Describe exactly what should change]
+[Be specific — "the button should be blue" not "improve the button"]
+
+## 4. Affected Areas
+
+| Area | Files | Impact |
+|------|-------|--------|
+| [Component/Module] | [file paths] | [what changes] |
+| ... | ... | ... |
+
+## 5. Acceptance Criteria
+
+Each criterion must be testable and unambiguous:
+
+- [ ] **AC-1**: [Specific, testable criterion]
+- [ ] **AC-2**: [Specific, testable criterion]
+- [ ] **AC-3**: [Specific, testable criterion]
+...
+
+## 6. Out of Scope
+
+[Explicitly list things that are NOT part of this spec]
+[This prevents scope creep during implementation]
+
+- NOT included: [thing 1]
+- NOT included: [thing 2]
+
+## 7. Technical Constraints
+
+[Any constraints from the constitution, architecture, or external systems]
+
+- Must follow: [architecture pattern]
+- Must not break: [existing feature]
+- Must use: [specific API/pattern]
+
+## 8. Open Questions
+
+[Any remaining uncertainties that might come up during implementation]
+[These should be minor — major questions should have been resolved in Phase 2]
+
+## 9. Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| [risk] | Low/Med/High | Low/Med/High | [how to handle] |
+```
+
+## PHASE 5: User Approval
+
+**HARD GATE**: The spec MUST be approved before proceeding to `/breakdown`.
+
+Present the spec summary to the user:
+
+"I've created the specification at `specs/[filename].md`. Key points:
+- **What changes**: [1-2 sentences]
+- **Files affected**: [count] files across [areas]
+- **Acceptance criteria**: [count] testable criteria
+- **Out of scope**: [key exclusions]
+
+Please review and either approve or request changes. Once approved, run `/breakdown` to generate tasks."
+
+## IMPORTANT RULES
+
+1. **Specs are contracts** — once approved, the implementation must satisfy every acceptance criterion
+2. **Be exhaustive on "out of scope"** — this prevents the most common problem (scope creep)
+3. **Every AC must be testable** — "improved UX" is not testable, "modal closes after successful save" is
+4. **Reference specific files** — use `path/to/file.ts:line` format so the developer can navigate directly
+5. **Check MEMORY.md** — if similar work was done before, reference what went right/wrong
+6. **Don't propose solutions** — the spec describes WHAT, not HOW. Solutions come in `/breakdown`

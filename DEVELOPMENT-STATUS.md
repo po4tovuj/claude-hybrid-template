@@ -1,0 +1,59 @@
+# Claude Hybrid Template — Development Status
+
+## What This Is
+
+A reusable spec-driven development template for Claude Code. Combines a structured intake flow (clarify → specify → plan → breakdown → execute → verify) with enforced quality gates, specialized agents, and automated hooks.
+
+## What's Built
+
+### Commands (8 files in `.claude/commands/`)
+- `setup-wizard.md` — Interactive project setup, auto-detects stack or interviews for greenfield
+- `constitute.md` — Generates constitution from codebase analysis (existing) or interview (greenfield)
+- `clarify.md` — Optional pre-step, 9 ambiguity categories, max 5 questions
+- `specify.md` — Creates feature specs with acceptance criteria
+- `plan.md` — Technical plan between spec and breakdown (architecture, data model, contracts)
+- `breakdown.md` — Splits plan into sequential atomic tasks in individual files
+- `execute-task.md` — Runs a single task with pre-flight checks, agent execution, doc writing, verification
+- `verify.md` — Validates all tasks against spec acceptance criteria
+
+### Agent Templates (14 files in `.claude/templates/agents/`)
+Always included: `code-reviewer`, `qa-engineer`, `runtime-debugger`, `tech-writer`
+By project type: `frontend-engineer`, `backend-engineer`, `architect`
+By detected stack: `db-engineer`, `devops-engineer`, `design-auditor`, `api-designer`, `performance-analyst`, `security-reviewer`, `migration-engineer`
+
+Setup wizard decides which agents to generate based on detected stack.
+
+### Supporting Templates (in `.claude/templates/`)
+- `CLAUDE.template.md` — Main project config, workflow commands, key rules (Always/Never lists)
+- `constitution.template.md` — Pre-populated universal rules + project-specific placeholders
+- `settings.template.json` — PostToolUse type-checking hook + safe permissions
+- `spec.template.md` — Feature spec template with 10 sections
+- `memory.template.md` — Persistent memory with universal categories
+- `storage-rules.md` — Full storage conventions for specs, tasks, and docs
+
+### Other
+- `README.md` — Full documentation with installation, workflow, pre-populated rules section
+- `specs/` — Empty specs directory with .gitkeep
+
+## Key Design Decisions
+
+1. **User's workflow is primary** — spec-kit ideas adapted to serve hard gates + agents, not replace them
+2. **Hard gates at every phase transition** — spec, plan, breakdown all require explicit user approval
+3. **Per-feature storage** — everything in `specs/NNN-feature-name/` with tasks as individual numbered files in `tasks/` subfolder
+4. **Sequential numbering** — features: 001, 002...; tasks within feature: 001, 002...
+5. **All agents as templates, wizard selects** — 14 templates, setup wizard conditionally generates based on project
+6. **Universal constitution rules pre-populated** — SOLID, DRY, KISS, error handling, code quality, workflow rules all built-in; project-specific rules added by `/constitute`
+7. **Mandatory documentation** — tech-writer agent runs after every task, reads only changed code, writes to `docs/`
+8. **Greenfield support** — all commands work for empty/new projects
+9. **Check before build** — must search codebase for existing utilities before creating new ones
+
+## What's Left / Potential Enhancements
+
+- Test the full flow end-to-end on an actual project
+- The `docs/` folder structure might need adjustment per project type
+- Consider adding a `/commit` command that summarizes changes
+- Consider a `/status` command to show current feature progress
+- The setup wizard could detect more frameworks/tools
+- Agent templates use `{{PLACEHOLDER}}` variables — wizard must replace all of them
+- `constitution.md` stub generation (step 3.5 in wizard) — template content TBD
+- ~~Consider if tech-writer should also update inline code docs (JSDoc/docstrings) or just `docs/` folder~~ **DECIDED: both. Tech-writer updates inline docs (JSDoc/docstrings) AND `docs/` folder.**
