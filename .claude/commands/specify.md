@@ -10,6 +10,17 @@ Create a structured specification for a feature or change. This command takes a 
 ## Arguments
 - `$ARGUMENTS` — The feature description provided by the user. If empty, ask the user to describe what they want.
 
+## Pre-Step: Reset Session State
+
+Delete `.claude/session-state.md` if it exists (or overwrite with the empty placeholder). A new spec means a new feature scope — previous session tracking is irrelevant.
+
+```markdown
+<!-- This file is a fixed-size sliding window. Always fully overwritten, never appended. Max ~40 lines. -->
+# Session State
+
+No tasks executed yet. This file is updated automatically after each `/execute-task` run.
+```
+
 ## PHASE 1: Understand the Request
 
 Read the user's description from `$ARGUMENTS`.

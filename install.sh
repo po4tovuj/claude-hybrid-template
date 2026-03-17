@@ -22,4 +22,9 @@ cp -r "$TEMPLATE_DIR/specs" "$TARGET_DIR/"
 cp -r "$TEMPLATE_DIR/scripts" "$TARGET_DIR/"
 cp "$TEMPLATE_DIR/.mcp.json" "$TARGET_DIR/"
 
-echo "Done. Open the project in Claude Code and run /setup-wizard"
+# Write template version for future updates
+TEMPLATE_VERSION="$(cat "$TEMPLATE_DIR/.claude/template-version" 2>/dev/null || echo "1.0.0")"
+echo "$TEMPLATE_VERSION" > "$TARGET_DIR/.claude/template-version"
+
+echo "Done. Template version $TEMPLATE_VERSION installed."
+echo "Open the project in Claude Code and run /setup-wizard"

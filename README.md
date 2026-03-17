@@ -14,7 +14,7 @@ Every phase transition requires explicit user approval. No step can be skipped.
 /path/to/claude-hybrid-template/install.sh /path/to/your-project
 ```
 
-This copies `.claude/`, `specs/`, `scripts/`, and `.mcp.json` into your project. Then open it in Claude Code and run `/setup-wizard`.
+This copies `.claude/`, `specs/`, `scripts/`, `.mcp.json`, and `update.sh` into your project. It also writes `.claude/template-version` to track which version you're on. Then open it in Claude Code and run `/setup-wizard`.
 
 The wizard will:
    - Detect your project structure (or interview you for greenfield projects)
@@ -30,6 +30,36 @@ The template includes two pre-configured MCP servers in `.mcp.json`:
 - **Chrome DevTools** — Connects to WebStorm's Chrome debugger for taking screenshots and evaluating scripts in the browser. Requires WebStorm JS debugger to be running. The script at `scripts/chrome-devtools-mcp.sh` auto-detects the debugging port.
 
 Both servers are enabled by default in the settings template. Permissions for their tools (`take_screenshot`, `evaluate_script`, `resolve-library-id`, `get-library-docs`) are pre-allowed.
+
+## Updating Projects
+
+When the template is improved, you can push updates to projects that already use it — without destroying project-specific customizations (CLAUDE.md, constitution.md, agents, memory, specs).
+
+```bash
+# From the template repo, pointing at a target project
+./update.sh /path/to/target-project
+
+# Preview changes without modifying anything
+./update.sh --dry-run /path/to/target-project
+
+# Skip the confirmation prompt
+./update.sh --force /path/to/target-project
+```
+
+### What gets updated vs. preserved
+
+| Category | What happens | Examples |
+|----------|-------------|----------|
+| **Template-owned** | Overwritten with latest version | Commands (`.claude/commands/`), templates, scripts, `update.sh` |
+| **Project-owned** | Never touched | `CLAUDE.md`, `constitution.md`, agents, memory, specs, docs |
+| **Merge files** | Smart-merged (union of keys/lines) | `.mcp.json` (new servers added), `.gitignore` (new entries added) |
+| **Copy if missing** | Copied only if absent | New files added to the template that projects don't have yet |
+
+### Version tracking
+
+Each project stores its template version in `.claude/template-version`. The update script compares this with the template's current version and shows the relevant changelog entries before applying changes.
+
+Requires `jq` for JSON merging (`brew install jq` on macOS, `apt install jq` on Linux).
 
 ## Workflow
 

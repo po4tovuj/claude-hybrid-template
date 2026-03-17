@@ -47,6 +47,19 @@ Setup wizard decides which agents to generate based on detected stack.
 8. **Greenfield support** — all commands work for empty/new projects
 9. **Check before build** — must search codebase for existing utilities before creating new ones
 
+### Context Maintenance (Phase 7.5)
+- `/execute-task` now includes Phase 7.5: Context Maintenance after each task
+- Writes a fixed-size (~40 line) sliding window to `.claude/session-state.md` with current progress, recent decisions, and modified files
+- Three-tier context health check: light (no action), moderate (optional /compact), heavy (strongly recommend /compact)
+- Session state is gitignored — it's a runtime artifact, not project state
+- CLAUDE.template.md updated with rule 13 (session state) and Session Continuity section
+
+### Crash Recovery (Phase 0 + WIP Checkpoints)
+- `/execute-task` now creates a WIP marker (`.claude/wip.md`) and git checkpoint commits during execution
+- Phase 0: Recovery Check detects interrupted tasks and offers 4 options: resume, rollback+retry, rollback+skip, keep manual
+- Git `[WIP]` commits preserve partial work at each phase; squashed into a clean commit on completion
+- `wip.md` is gitignored — only exists during active task execution
+
 ## What's Left / Potential Enhancements
 
 - Test the full flow end-to-end on an actual project

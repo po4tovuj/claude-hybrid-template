@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "description": "Manifest for claude-hybrid-template update system",
+
+  "templateOwned": {
+    "description": "Files 100% owned by the template — safe to overwrite on update",
+    "patterns": [
+      ".claude/commands/breakdown.md",
+      ".claude/commands/clarify.md",
+      ".claude/commands/constitute.md",
+      ".claude/commands/execute-task.md",
+      ".claude/commands/plan.md",
+      ".claude/commands/setup-wizard.md",
+      ".claude/commands/specify.md",
+      ".claude/commands/verify.md",
+      "scripts/**"
+    ]
+  },
+
+  "templateDerived": {
+    "description": "Template files whose changes should propagate to generated files in target projects. Only updates files that already exist in the target (i.e., agents the project chose to install).",
+    "mappings": [
+      {
+        "source": ".claude/templates/agents",
+        "target": ".claude/agents",
+        "strip_suffix": ".template",
+        "description": "Agent templates → generated agents. E.g. code-reviewer.template.md → code-reviewer.md"
+      }
+    ]
+  },
+
+  "projectOwned": {
+    "description": "Files generated/customized per-project — NEVER overwrite",
+    "patterns": [
+      "CLAUDE.md",
+      "constitution.md",
+      ".claude/memory/**",
+      ".claude/settings.json",
+      ".claude/settings.local.json",
+      ".claude/session-state.md",
+      ".claude/wip.md",
+      "specs/**",
+      "docs/**",
+      "DEVELOPMENT-STATUS.md"
+    ]
+  },
+
+  "mergeFiles": {
+    "description": "Files with both template and project content — smart merge required",
+    "files": {
+      ".mcp.json": {
+        "strategy": "union_keys",
+        "description": "Union of mcpServers keys — add new template servers, keep existing project servers",
+        "mergeKey": "mcpServers"
+      },
+      ".gitignore": {
+        "strategy": "union_lines",
+        "description": "Add new template lines, keep existing project lines"
+      }
+    }
+  },
+
+  "copyIfMissing": {
+    "description": "Files to copy only if they don't exist in the target project",
+    "patterns": [
+      "specs/.gitkeep"
+    ]
+  }
+}

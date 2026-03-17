@@ -100,6 +100,8 @@ One-time deep codebase analysis (or interview for greenfield projects) that gene
 10. **Validate at boundaries** — validate external input (user input, API responses, env vars); trust internal code
 11. **SOLID, DRY, KISS** — single responsibility, don't repeat logic 3+ times, keep it simple
 12. **Search before building** — before writing anything generic/reusable, search the codebase for existing utilities, helpers, or components that already do it
+13. **Session state** — after each `/execute-task`, overwrite `.claude/session-state.md` with a fixed-size snapshot of current progress. At session start, read it first if it exists.
+14. **Crash recovery** — `/execute-task` writes a WIP marker before execution and creates git checkpoints at each phase. If interrupted, the next run detects it and offers resume/rollback/skip options.
 
 ### Never
 1. **Never swallow errors** — empty catch blocks are forbidden; handle, re-throw, or log with reason
@@ -139,6 +141,22 @@ docs/
 - Everything for a feature lives in one directory
 - Docs are organized by topic (not by task/date) in `docs/`
 - See `.claude/templates/storage-rules.md` for full conventions
+
+## Session Continuity
+
+At the start of each session, read `.claude/session-state.md` if it exists. It contains a compact snapshot from the last completed task — current feature, progress, recent decisions, and recently modified files.
+
+This file is:
+- **Fixed-size** — always fully overwritten, never appended, max ~40 lines
+- **A sliding window** — only tracks the last 3 tasks' modifications and last 3 decisions
+- **Not a history log** — history lives in task completion notes (`specs/`) and `MEMORY.md`
+- **Updated automatically** by `/execute-task` (Phase 7.5)
+
+If you run `/clear` or context is compacted, session-state.md ensures the next `/execute-task` can bootstrap without re-discovering state.
+
+### Crash Recovery
+
+If a task execution is interrupted (power loss, terminal crash, network drop), the next `/execute-task` will detect the interrupted state via `.claude/wip.md` and offer recovery options: resume from where it stopped, rollback and retry, rollback and skip, or keep changes for manual handling. Git checkpoint commits (`[WIP]` prefix) preserve partial work and get squashed into a clean commit on successful completion.
 
 ## References
 
