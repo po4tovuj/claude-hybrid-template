@@ -5,6 +5,53 @@ All notable changes to this template will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.1] - 2026-03-25
+
+### Changed
+- Tech-writer agent model hardcoded to `sonnet` instead of `{{AGENT_MODEL}}` — docs generation doesn't need opus, sonnet is faster and cheaper
+- `/release` command added for automating version bumps, changelog, and documentation updates in the template repo
+
+### Fixed
+- Artifact Storage tree in CLAUDE.md template showed `research/` nested under `specs/` — corrected to project root, matching `/research` command behavior since v1.13.0
+
+## [1.16.0] - 2026-03-25
+
+### Added
+- `/setup-wizard` now saves **baselines** during generation (Steps 3.1.1 and 3.2.1)
+  - CLAUDE.md baseline saved to `.claude/.baseline/CLAUDE.md`
+  - Agent baselines saved to `.claude/agents/.baseline/[name].md`
+  - Enables `update.sh` three-way merge immediately after setup — no bootstrap run needed
+
+### Changed
+- Template version: 1.15.0 → 1.16.0
+
+## [1.15.0] - 2026-03-24
+
+### Added
+- **Configurable agent model** — `/setup-wizard` Question 8 asks preferred model for agents (default: `opus`)
+  - All 14 agent templates now use `{{AGENT_MODEL}}` placeholder instead of hardcoded model
+  - Stored in `.claude/project-config.json` (`AGENT_MODEL` key)
+  - To switch models (e.g., when rate-limited): change `AGENT_MODEL` in `project-config.json` and re-run `/setup-wizard` or edit agent files directly
+- **Three-way merge for agents and CLAUDE.md** — `update.sh` now uses `git merge-file` instead of section-merge or full replacement
+  - Applies only the actual template diff (baseline → new) to current files
+  - Preserves ALL project customizations: wizard-added framework-specific items, custom sections, manual edits
+  - Baselines stored in `.claude/agents/.baseline/` and `.claude/.baseline/`
+  - First update saves baselines (files unchanged); subsequent updates three-way merge
+- **Placeholder validation** — `update.sh` validates no `{{PLACEHOLDER}}` remains after substitution; skips file if unresolved (prevents destroying working agents with raw placeholders)
+- **Config validation** — `update.sh` warns when `project-config.json` values themselves contain raw `{{PLACEHOLDER}}` patterns
+- `AGENT_MODEL` extraction in `update.sh` migration (reads `model:` from agent frontmatter, defaults to `opus`)
+
+### Changed
+- Templates (`.claude/templates/**`) no longer copied to target projects during update — removed from `templateOwned` patterns
+- CLAUDE.md moved from section-merge to three-way merge (same approach as agents)
+- Removed `sectionMerge` category from manifest (replaced by three-way merge)
+- Template version: 1.14.0 → 1.15.0
+
+### Fixed
+- **Agents overwritten with raw `{{PLACEHOLDER}}`** — when `project-config.json` had broken values (e.g., `"PROJECT_PATHS": "{{PROJECT_PATHS}}"`), agents were destroyed. Now validates before writing.
+- **Templates pushed to target projects** — `.claude/templates/**` was in `templateOwned`, causing raw template files to appear in target projects
+- **CLAUDE.md custom sections deleted** — section-merge dropped user-added sections (e.g., `## Figma Plugin Architecture Notes`). Three-way merge preserves them.
+
 ## [1.14.0] - 2026-03-24
 
 ### Added

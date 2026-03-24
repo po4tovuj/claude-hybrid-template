@@ -6,8 +6,8 @@ A reusable spec-driven development template for Claude Code. Combines a structur
 
 ## What's Built
 
-### Commands (15 files in `.claude/commands/`)
-- `setup-wizard.md` — Interactive project setup, auto-detects stack or interviews for greenfield
+### Commands (16 files in `.claude/commands/`)
+- `setup-wizard.md` — Interactive project setup, auto-detects stack or interviews for greenfield; saves baselines for three-way merge on first run
 - `constitute.md` — Generates constitution from codebase analysis (existing) or interview (greenfield)
 - `onboard.md` — Deep codebase scan for existing projects, generates comprehensive `docs/` via tech-writer agent
 - `research.md` — Quick feasibility check for vague ideas; investigates codebase for related patterns, signal-based external research, displays full report in console and optionally saves to `research/DD-MM-YY-[topic-slug].md`
@@ -21,6 +21,7 @@ A reusable spec-driven development template for Claude Code. Combines a structur
 - `report-bug.md` — Creates structured bug report files in `bugs/` for later fixing via `/fix` or `/specify`
 - `refactor.md` — Focused refactoring workflow: analyze → propose → approve → apply → review → doc update (conditional), with auto-selected agent (architect/frontend-engineer/backend-engineer), code-reviewer, and qa-engineer agents
 - `refresh-docs.md` — Lightweight documentation refresh using git delta; invokes tech-writer in Refresh Mode on changed files only
+- `release.md` — Meta-command for the template repo itself: automates version bump, changelog, and documentation updates after making changes
 
 ### Agent Templates (14 files in `.claude/templates/agents/`)
 Always included: `code-reviewer`, `qa-engineer`, `runtime-debugger`, `tech-writer`
@@ -38,10 +39,12 @@ Setup wizard decides which agents to generate based on detected stack.
 - `storage-rules.md` — Full storage conventions for specs, tasks (with contracts and review checkpoint fields), bugs, and docs
 
 ### Update System
-- `update.sh` — Manifest-driven update script with 5 strategies: overwrite (template-owned), section-merge (CLAUDE.md), derived with placeholder substitution (agents), smart merge (JSON/text), copy-if-missing
-- `.claude/project-config.json` — Machine-readable config written by `/setup-wizard`, stores all template variable values (including `COMMIT_ATTRIBUTION`) for `update.sh` placeholder substitution
+- `update.sh` — Manifest-driven update script with 4 strategies: overwrite (template-owned), three-way merge via `git merge-file` (agents + CLAUDE.md), smart merge (JSON/text), copy-if-missing
+- **Three-way merge**: stores baseline snapshots of substituted templates in `.claude/agents/.baseline/` and `.claude/.baseline/`. On update, computes diff (baseline → new template) and applies it to current file — preserves all project customizations while propagating template improvements
+- **Placeholder validation**: after substitution, checks for remaining `{{...}}` patterns; skips file if found (prevents destroying agents with broken config values)
+- `.claude/project-config.json` — Machine-readable config written by `/setup-wizard`, stores all template variable values (including `COMMIT_ATTRIBUTION`, `AGENT_MODEL`) for `update.sh` placeholder substitution
 - `.claude/template-manifest.json` — Defines file ownership categories and update strategies; self-updates (template-owned)
-- One-time migration: extracts config from existing `CLAUDE.md` and agent files when `project-config.json` is missing (defaults to no AI attribution for `COMMIT_ATTRIBUTION`)
+- One-time migration: extracts config from existing `CLAUDE.md` and agent files when `project-config.json` is missing
 
 ### Other
 - `README.md` — Full documentation with installation, workflow, pre-populated rules section
@@ -74,6 +77,8 @@ Setup wizard decides which agents to generate based on detected stack.
 11. **Wrapper mode for client-invisible AI** — template wraps around existing project folder; zero Claude traces in the client's repo
 12. **Cross-task contracts prevent silent drift** — each task declares Expects/Produces; preconditions catch upstream semantic errors before they compound, postconditions verify the task delivered what downstream tasks need
 13. **Configurable AI attribution** — commits default to no Claude/AI mention; opt-in via setup wizard. Rule stored in CLAUDE.md and enforced by all commit-creating commands
+14. **Configurable agent model** — agents default to opus; configurable via setup wizard (`AGENT_MODEL` in project-config.json). Switch to sonnet when rate-limited
+15. **Three-way merge for updates** — `update.sh` uses `git merge-file` with baselines to apply only template diffs, preserving all project customizations (wizard-added items, custom sections, manual edits)
 
 ### Onboarding System (`/onboard`)
 - Runs after `/constitute` for existing projects — uses constitution + CLAUDE.md + memory as input
