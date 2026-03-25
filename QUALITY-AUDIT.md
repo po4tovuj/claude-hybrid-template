@@ -63,15 +63,8 @@ Comprehensive quality audit of the AIDevTeamForge template system — a set of C
 ### ~~H6. `/fix` Phase 6 code review can trigger unlimited fix cycles~~ RESOLVED
 - **Resolution**: Phase 6 now specifies max 1 additional review cycle when code-reviewer returns BLOCK. If still blocked after that cycle, execution stops and reports to the user.
 
-### H7. Date format inconsistency across commands
-- **Location**: Multiple files
-- **Problem**: Four different date formats:
-  - Research filenames: `DD-MM-YY` (2-digit year, doesn't sort chronologically)
-  - Plan/Clarify timestamps: `DD-MM-YYYY HH:MM Ukrainian time`
-  - Spec dates: `YYYY-MM-DD` (ISO)
-  - Bug report dates: `YYYY-MM-DD`
-- **Impact**: Inconsistent naming, sorting issues, and "Ukrainian time" is locale-specific.
-- **Fix**: Standardize on ISO 8601 (`YYYY-MM-DD`) everywhere. Remove "Ukrainian time" — use local timezone.
+### ~~H7. Date format inconsistency across commands~~ RESOLVED
+- **Resolution**: Standardized all date formats to ISO 8601 (`YYYY-MM-DD`). Removed "Ukrainian time" references from plan.md, research.md, and clarify.md. Updated research filename format from `DD-MM-YY` to `YYYY-MM-DD`.
 
 ### H8. `/onboard` Phase 3.3 tries to update CLAUDE.md with content that's already there
 - **Location**: `onboard.md` lines 466-478
