@@ -39,6 +39,7 @@ Read `.claude/wip.md`. If it does NOT exist, skip to PHASE 1.
 
 If it DOES exist, a previous execution was interrupted. First check the `## Command` field:
 - If `Command: refactor` → this is a previous refactoring. Continue with recovery below.
+- If the `## Command` field is **missing** (pre-v3 format) → assume it belongs to the current command. Continue with recovery below.
 - If `Command: execute-task` or `Command: fix` → a different command was interrupted. Inform the user: "A previous `/[command]` session was interrupted (see .claude/wip.md). Clear it first by running `/[command]` to resume or recover, or delete `.claude/wip.md` manually to discard it." STOP — do not proceed.
 
 Read the WIP marker to determine:

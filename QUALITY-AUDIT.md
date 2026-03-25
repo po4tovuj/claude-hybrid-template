@@ -1,8 +1,8 @@
-# Quality Audit: AIDevTeamForge — Cumulative Results (v1 → v2 → v3 → v4)
+# Quality Audit: AIDevTeamForge — Cumulative Results (v1 → v2 → v3 → v4 → v5)
 
 ## Overview
 
-Four audit passes covering the entire AIDevTeamForge template system: 15 commands, 5 templates, 14 agent templates, install.sh, update.sh, template-manifest.json, settings.template.json, and cross-file consistency.
+Five audit passes covering the entire AIDevTeamForge template system: 15 commands, 5 templates, 14 agent templates, install.sh, update.sh, template-manifest.json, settings.template.json, and cross-file consistency.
 
 | Audit | Date | Issues Found | Resolved |
 |-------|------|-------------|----------|
@@ -10,7 +10,8 @@ Four audit passes covering the entire AIDevTeamForge template system: 15 command
 | v2 | 2026-03-25 | 16 | 16 (15 fixed, 1 accepted) |
 | v3 | 2026-03-25 | 12 | 12 (9 fixed, 3 accepted/deferred) |
 | v4 | 2026-03-25 | 5 | 5 (3 fixed, 2 acceptable/no-action) |
-| **Total** | | **64** | **64** |
+| v5 | 2026-03-25 | 1 | 1 (1 fixed) + 12 assessed as not actionable |
+| **Total** | | **65** | **65** |
 
 ---
 
@@ -126,12 +127,30 @@ Four audit passes covering the entire AIDevTeamForge template system: 15 command
 
 ---
 
+---
+
+## v5 Audit (1 issue) — FIXED
+
+### v4 Fix Verification: ALL PASS, ZERO REGRESSIONS
+- Bash portability: confirmed no bash 4+ features in update.sh or install.sh
+- Placeholder consistency: 24/24 keys present in setup-wizard, update.sh migration, and all templates
+- Agent template coverage: 14/14 agents fully covered
+- Markdown formatting: no corruption
+- 12 additional semantic/logic items evaluated and assessed as not actionable (by design, already handled, theoretical, or impossible)
+
+### MEDIUM (1) — Fixed
+
+#### ~~V5-M1. Phase 0.1 doesn't handle old wip.md files missing `## Command` field~~ RESOLVED
+- **Resolution**: Added fallback to all 3 commands (execute-task, fix, refactor): "If the `## Command` field is missing (pre-v3 format), assume the current command and continue with recovery."
+
+---
+
 ## Cumulative Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total issues found | 64 |
-| Fixed | 57 |
+| Total issues found | 65 |
+| Fixed | 58 |
 | Accepted (by design) | 4 |
 | Deferred (next release) | 2 |
 | Moot (dead code removed) | 1 |
