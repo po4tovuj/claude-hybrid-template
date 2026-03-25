@@ -206,11 +206,12 @@ Wait for user response. Record which items were approved. If the user cancels, e
 
 Before writing ANY code, verify:
 
-1. **Constitution compliance**: Does the planned refactoring comply with all NON-NEGOTIABLE rules?
-2. **Behavior preservation**: Verify that approved changes are genuinely behavior-preserving. If any change would alter observable behavior, flag it and remove from scope
-3. **Memory check**: Does MEMORY.md have any warnings about similar changes or this area of code?
-4. **File state check**: Are the target files in a clean state? (`git status`)
-5. **Scope constraint**: The refactoring must touch ONLY the files identified in the proposal. If more files need changing, re-assess scope (Phase 1.5)
+1. **Constitution populated**: If `constitution.md` contains `_Run /constitute to populate_`, stop immediately and inform the user: "⛔ constitution.md has not been populated yet. Run `/constitute` before using `/refactor`."
+2. **Constitution compliance**: Does the planned refactoring comply with all NON-NEGOTIABLE rules?
+3. **Behavior preservation**: Verify that approved changes are genuinely behavior-preserving. If any change would alter observable behavior, flag it and remove from scope
+4. **Memory check**: Does MEMORY.md have any warnings about similar changes or this area of code?
+5. **File state check**: Are the target files in a clean state? (`git status`)
+6. **Scope constraint**: The refactoring must touch ONLY the files identified in the proposal. If more files need changing, re-assess scope (Phase 1.5)
 
 If ANY pre-flight check fails, stop and inform the user with specifics.
 
@@ -218,7 +219,7 @@ If ANY pre-flight check fails, stop and inform the user with specifics.
 
 1. Create a git checkpoint BEFORE any changes:
    ```
-   git add -A && git commit -m "[checkpoint] Pre-refactor: [short description]" --allow-empty
+   git commit -m "[checkpoint] Pre-refactor: [short description]" --allow-empty
    ```
 
 2. Write `.claude/wip.md`:
@@ -280,7 +281,7 @@ You are executing an approved refactoring plan.
 
 After the agent completes, commit:
 ```
-git add -A && git commit -m "[WIP] Refactor: [short description] — refactoring applied"
+git add [files you modified] .claude/wip.md && git commit -m "[WIP] Refactor: [short description] — refactoring applied"
 ```
 
 Update `.claude/wip.md` — change Phase to `5 (Verify)`.
@@ -305,7 +306,7 @@ For each repair attempt:
 2. Apply a targeted fix for ONLY those errors
 3. Commit:
    ```
-   git add -A && git commit -m "[WIP] Refactor: [short description] — repair attempt [M]/3"
+   git add [files you modified] .claude/wip.md && git commit -m "[WIP] Refactor: [short description] — repair attempt [M]/3"
    ```
 4. Re-run ALL verification checks
 
@@ -335,7 +336,7 @@ The agent will check: constitution compliance, architecture & patterns, type saf
 - Re-run verification (Phase 5 checks)
 - Commit:
   ```
-  git add -A && git commit -m "[WIP] Refactor: [short description] — review fixes"
+  git add [files you modified] .claude/wip.md && git commit -m "[WIP] Refactor: [short description] — review fixes"
   ```
 
 **If the agent returns APPROVE or only warnings/info** → proceed to Phase 7.
@@ -363,7 +364,7 @@ The agent should:
 
 If tests were adjusted (import fixes only), commit:
 ```
-git add -A && git commit -m "[WIP] Refactor: [short description] — test import fixes"
+git add [test files you modified] && git commit -m "[WIP] Refactor: [short description] — test import fixes"
 ```
 
 ## PHASE 7.5: Documentation Update (Conditional)
@@ -378,7 +379,7 @@ If the refactoring changed any **public API signatures** (renamed exports, moved
 
 2. If the tech-writer made changes, commit:
    ```
-   git add -A && git commit -m "[WIP] Refactor: [short description] — doc update"
+   git add docs/ [source files with doc changes] && git commit -m "[WIP] Refactor: [short description] — doc update"
    ```
 
 If the refactoring is purely internal (no public API, import path, or architecture change), skip this phase — but document the skip decision in Phase 8.3's report as: `**Documentation**: Internal refactoring — no public API changes`.
@@ -387,11 +388,19 @@ If the refactoring is purely internal (no public API, import path, or architectu
 
 ### 8.1: Final Commit
 
-Squash all `[WIP]` and `[checkpoint]` commits for this refactoring into a single clean commit:
+Squash all `[WIP]` and `[checkpoint]` commits for this refactoring into a single clean commit.
+
+First, verify WIP commits haven't been pushed to the remote:
 ```
-git reset --soft [checkpoint-commit-hash]
-git commit -m "refactor([area]): [concise description of what was restructured]"
+git log --oneline origin/$(git branch --show-current)..HEAD 2>/dev/null
 ```
+- If this shows commits (or fails because there's no upstream) → WIP commits are **local only** → safe to squash:
+  ```
+  git reset --soft [checkpoint-commit-hash]
+  git commit -m "refactor([area]): [concise description of what was restructured]"
+  ```
+- If this shows **no commits** (HEAD matches remote) → WIP commits were already pushed → **skip squashing** and keep commits as-is.
+
 Follow the **Commit Convention** section in CLAUDE.md (format and attribution rules).
 
 ### 8.2: Delete WIP Marker

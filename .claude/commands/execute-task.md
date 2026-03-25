@@ -153,13 +153,14 @@ Verify:
 
 Before writing ANY code, verify:
 
-1. **Constitution compliance**: Does the planned change violate any NON-NEGOTIABLE rules?
-2. **Memory check**: Does MEMORY.md have any warnings about similar changes?
-3. **File state check**:
+1. **Constitution populated**: If `constitution.md` contains `_Run /constitute to populate_`, stop immediately and inform the user: "⛔ constitution.md has not been populated yet. Run `/constitute` before using `/execute-task`."
+2. **Constitution compliance**: Does the planned change violate any NON-NEGOTIABLE rules?
+3. **Memory check**: Does MEMORY.md have any warnings about similar changes?
+4. **File state check**:
    - **Existing files**: Are the target files in the expected state? (No unexpected changes since the breakdown was created)
    - **New files (greenfield)**: Does the target directory exist? If not, it should be created as part of this task or a prior task
-4. **Type safety**: Read the type definitions involved and verify the change is type-safe on paper. For greenfield, verify the proposed types align with the constitution's patterns
-5. **Contract preconditions**: Read the task's `## Contracts → ### Expects` section. For each precondition:
+5. **Type safety**: Read the type definitions involved and verify the change is type-safe on paper. For greenfield, verify the proposed types align with the constitution's patterns
+6. **Contract preconditions**: Read the task's `## Contracts → ### Expects` section. For each precondition:
    - Use Grep or Read to verify the condition holds in the current codebase (e.g., check that an export exists, an interface has expected fields, a function exists with the expected name)
    - If a precondition fails:
      - Identify which upstream task should have produced it (check the task's "Depends on" and the upstream task's "Produces")
@@ -173,7 +174,7 @@ If ANY pre-flight check fails, stop and inform the user with specifics.
 
 1. Create a git checkpoint BEFORE any changes:
    ```
-   git add -A && git commit -m "[checkpoint] Pre-task [N]: [title]" --allow-empty
+   git commit -m "[checkpoint] Pre-task [N]: [title]" --allow-empty
    ```
    This gives us a clean rollback point.
 
@@ -257,7 +258,7 @@ These postconditions will be independently verified after you complete.
 
 After the agent completes, immediately create a WIP git commit to preserve the work:
 ```
-git add -A && git commit -m "[WIP] Task [N]: [title] — agent execution complete"
+git add [files you modified] .claude/wip.md && git commit -m "[WIP] Task [N]: [title] — agent execution complete"
 ```
 
 Update `.claude/wip.md` — change Phase to `4 (Mark Complete)`.
@@ -288,7 +289,7 @@ For each repair attempt:
    - Clear instruction: **"Fix ONLY these errors. Do not add features, refactor, or change scope. Stay within the files listed."**
 3. After the repair agent completes, commit:
    ```
-   git add -A && git commit -m "[WIP] Task [N]: [title] — repair attempt [M]/3"
+   git add [files you modified] .claude/wip.md && git commit -m "[WIP] Task [N]: [title] — repair attempt [M]/3"
    ```
 4. Re-run ALL verification checks above
 
@@ -317,7 +318,7 @@ For each repair attempt:
 
 After marking the task complete in task files, commit:
 ```
-git add -A && git commit -m "[WIP] Task [N]: [title] — marked complete"
+git add specs/ .claude/wip.md && git commit -m "[WIP] Task [N]: [title] — marked complete"
 ```
 
 Update `.claude/wip.md` — change Phase to `5 (Documentation Update)`.
@@ -376,7 +377,7 @@ After the tech-writer completes, verify documentation was handled:
 
 If the tech-writer made any changes, commit them:
 ```
-git add -A && git commit -m "[WIP] Task [N]: [title] — documentation update"
+git add docs/ [source files with doc changes] && git commit -m "[WIP] Task [N]: [title] — documentation update"
 ```
 
 Update `.claude/wip.md` — change Phase to `6 (Report)`.
@@ -408,11 +409,19 @@ Provide a concise summary to the user:
 
 ### Final Commit and WIP Cleanup
 
-1. Squash all `[WIP]` and `[checkpoint]` commits for this task into a single clean commit:
+1. Squash all `[WIP]` and `[checkpoint]` commits for this task into a single clean commit.
+
+   First, verify WIP commits haven't been pushed to the remote:
    ```
-   git reset --soft [checkpoint-commit-hash]
-   git commit -m "feat([feature-name]): Task [N] — [title]"
+   git log --oneline origin/$(git branch --show-current)..HEAD 2>/dev/null
    ```
+   - If this shows commits (or fails because there's no upstream) → WIP commits are **local only** → safe to squash:
+     ```
+     git reset --soft [checkpoint-commit-hash]
+     git commit -m "feat([feature-name]): Task [N] — [title]"
+     ```
+   - If this shows **no commits** (HEAD matches remote) → WIP commits were already pushed → **skip squashing** and keep commits as-is.
+
    Follow the **Commit Convention** section in CLAUDE.md (format and attribution rules).
 
 2. Delete `.claude/wip.md`
@@ -523,7 +532,16 @@ After Phase 7.5 completes for the current task:
       - **Review**: show `git diff` for the preceding tasks' commits. After user reviews, ask again: Continue or Pause.
       - **Pause**: clean up WIP state (delete `.claude/wip.md`), stop execution. Report completed tasks so far.
    b. **Context health**: Read the "Tasks completed this session" count from session-state.md.
-      - If heavy (6+ tasks): **auto-compact** before continuing. Run `/compact` with these preserved items: (1) Current task statuses from `specs/[feature]/tasks/README.md`, (2) All entries from `.claude/memory/MEMORY.md`, (3) Constitution rules referenced during this session, (4) Next task's file list and change details from its task file, (5) Session state from `.claude/session-state.md`, (6) Phase 5 documentation obligation: every task MUST run the tech-writer agent and verify docs before Phase 6. Do NOT ask — compact and continue.
+      - If heavy (6+ tasks): **pause execution** and present the compaction command to the user:
+        ```
+        🔴 CONTEXT HEALTH PAUSE — [N] tasks completed this session (heavy context load).
+        Please run /compact before continuing:
+
+        /compact Preserve: (1) Current task statuses from specs/[feature]/tasks/README.md, (2) All entries from .claude/memory/MEMORY.md, (3) Constitution rules referenced during this session, (4) Next task's file list and change details from its task file, (5) Session state from .claude/session-state.md, (6) Phase 5 documentation obligation: every task MUST run the tech-writer agent and verify docs before Phase 6. Discard: file contents already committed, old error outputs, superseded diffs, resolved discussions.
+
+        Then resume with: /execute-task [remaining-task-ids]
+        ```
+        Stop execution here. Do NOT continue to the next task without user-initiated compaction.
       - If light/moderate: continue without compaction.
    c. **Loop back** to Phase 1 for the next task in the queue. The task queue carries over — do not re-parse `$ARGUMENTS`.
 
@@ -552,6 +570,6 @@ When all queued tasks are complete (or execution stops due to failure/blocked de
 6. **Hard stop on repair failure** — if all 3 repair attempts fail, stop the entire execution chain (including remaining queued tasks). Do not proceed with broken state.
 7. **Verify everything** — trust but verify. Even if hooks ran, run explicit verification after the agent finishes
 8. **Track deviations** — if the actual changes differ from the planned changes, document WHY in the task file's Completion Notes
-9. **Context hygiene** — always fully overwrite .claude/session-state.md after each task (never append). Keep it under 40 lines. Recommend /compact at moderate load. In multi-task mode, auto-compact at heavy load (6+ tasks) without asking.
+9. **Context hygiene** — always fully overwrite .claude/session-state.md after each task (never append). Keep it under 40 lines. Recommend /compact at moderate load. In multi-task mode, pause execution at heavy load (6+ tasks) and ask the user to run /compact before resuming.
 10. **Documentation is non-negotiable** — Phase 5 MUST run for every task, including in multi-task mode. The tech-writer agent must be invoked and its output verified (new public APIs must have inline docs). Skipping Phase 5 is a workflow violation equivalent to skipping verification.
 11. **Crash safety** — always write .claude/wip.md before starting execution and delete it only after the final commit. If wip.md exists at the start of execute-task, enter recovery flow. Never delete wip.md without either completing the task or explicitly rolling back.

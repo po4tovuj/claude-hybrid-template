@@ -166,10 +166,11 @@ Present this to the user. **HARD GATE**: Wait for user confirmation before apply
 
 Before writing ANY code, verify:
 
-1. **Constitution compliance**: Does the planned fix violate any NON-NEGOTIABLE rules?
-2. **Memory check**: Does MEMORY.md have any warnings about similar changes or this area of code?
-3. **File state check**: Are the target files in a clean state? (`git status`)
-4. **Scope constraint**: The fix must touch ONLY the files identified in the diagnosis. If more files need changing, re-assess scope (Phase 1.3).
+1. **Constitution populated**: If `constitution.md` contains `_Run /constitute to populate_`, stop immediately and inform the user: "⛔ constitution.md has not been populated yet. Run `/constitute` before using `/fix`."
+2. **Constitution compliance**: Does the planned fix violate any NON-NEGOTIABLE rules?
+3. **Memory check**: Does MEMORY.md have any warnings about similar changes or this area of code?
+4. **File state check**: Are the target files in a clean state? (`git status`)
+5. **Scope constraint**: The fix must touch ONLY the files identified in the diagnosis. If more files need changing, re-assess scope (Phase 1.3).
 
 If ANY pre-flight check fails, stop and inform the user with specifics.
 
@@ -177,7 +178,7 @@ If ANY pre-flight check fails, stop and inform the user with specifics.
 
 1. Create a git checkpoint BEFORE any changes:
    ```
-   git add -A && git commit -m "[checkpoint] Pre-fix: [short bug description]" --allow-empty
+   git commit -m "[checkpoint] Pre-fix: [short bug description]" --allow-empty
    ```
 
 2. Write `.claude/wip.md`:
@@ -217,7 +218,7 @@ Apply the minimal change that fixes the root cause.
 
 After applying the fix, commit:
 ```
-git add -A && git commit -m "[WIP] Fix: [short description] — fix applied"
+git add [files you modified] .claude/wip.md && git commit -m "[WIP] Fix: [short description] — fix applied"
 ```
 
 Update `.claude/wip.md` — change Phase to `5 (Verify)`.
@@ -242,7 +243,7 @@ For each repair attempt:
 2. Apply a targeted fix for ONLY those errors
 3. Commit:
    ```
-   git add -A && git commit -m "[WIP] Fix: [short description] — repair attempt [M]/3"
+   git add [files you modified] .claude/wip.md && git commit -m "[WIP] Fix: [short description] — repair attempt [M]/3"
    ```
 4. Re-run ALL verification checks
 
@@ -270,7 +271,7 @@ The agent will check: constitution compliance, architecture & patterns, type saf
 - Re-run verification (Phase 5 checks)
 - Commit:
   ```
-  git add -A && git commit -m "[WIP] Fix: [short description] — review fixes"
+  git add [files you modified] .claude/wip.md && git commit -m "[WIP] Fix: [short description] — review fixes"
   ```
 
 **If the agent returns APPROVE or only warnings/info** → proceed to Phase 7.
@@ -297,7 +298,7 @@ The agent should:
 
 If tests were added or modified, commit:
 ```
-git add -A && git commit -m "[WIP] Fix: [short description] — tests"
+git add [test files you modified] && git commit -m "[WIP] Fix: [short description] — tests"
 ```
 
 ## PHASE 7.5: Documentation Update (Conditional)
@@ -312,7 +313,7 @@ If the fix changed any **public API signatures** (function parameters, return ty
 
 2. If the tech-writer made changes, commit:
    ```
-   git add -A && git commit -m "[WIP] Fix: [short description] — doc update"
+   git add docs/ [source files with doc changes] && git commit -m "[WIP] Fix: [short description] — doc update"
    ```
 
 If the fix is purely internal (no public API or behavior change), skip this phase — but document the skip decision in Phase 8.3's report as: `**Documentation**: No public API changes — skipped`.
@@ -321,11 +322,19 @@ If the fix is purely internal (no public API or behavior change), skip this phas
 
 ### 8.1: Final Commit
 
-Squash all `[WIP]` and `[checkpoint]` commits for this fix into a single clean commit:
+Squash all `[WIP]` and `[checkpoint]` commits for this fix into a single clean commit.
+
+First, verify WIP commits haven't been pushed to the remote:
 ```
-git reset --soft [checkpoint-commit-hash]
-git commit -m "fix([area]): [concise description of what was fixed]"
+git log --oneline origin/$(git branch --show-current)..HEAD 2>/dev/null
 ```
+- If this shows commits (or fails because there's no upstream) → WIP commits are **local only** → safe to squash:
+  ```
+  git reset --soft [checkpoint-commit-hash]
+  git commit -m "fix([area]): [concise description of what was fixed]"
+  ```
+- If this shows **no commits** (HEAD matches remote) → WIP commits were already pushed → **skip squashing** and keep commits as-is.
+
 Follow the **Commit Convention** section in CLAUDE.md (format and attribution rules).
 
 ### 8.1.5: Update Bug File (if applicable)

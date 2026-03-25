@@ -29,29 +29,17 @@ Comprehensive quality audit of the AIDevTeamForge template system — a set of C
 - **Impact**: `/setup-wizard` auto-detects patterns and generates CLAUDE.md for an existing project. Then `/constitute` enters greenfield mode and interviews the user about architecture choices — ignoring what setup-wizard already detected. Contradictory behavior in the same workflow.
 - **Fix**: Align all thresholds. Recommend using a flag in `project-config.json` (set by setup-wizard) instead of re-counting files each time: `"PROJECT_MODE": "greenfield"` or `"existing"`.
 
-### C4. `settings.local.json` in template repo has literal `{{TYPE_CHECK_COMMAND}}` — PostToolUse hook will break
-- **Location**: `.claude/settings.local.json` (copied by `install.sh` to target project)
-- **Problem**: The template repo's `.claude/settings.local.json` contains a PostToolUse hook with `"command": "{{TYPE_CHECK_COMMAND}}"`. `install.sh` copies the entire `.claude/` directory including this file. Claude Code's harness will try to execute this literal string as a shell command after every Edit/Write operation.
-- **Impact**: Every file edit triggers a hook that runs `{{TYPE_CHECK_COMMAND}}` in the shell — which fails immediately. The hook is async with 30s timeout, so it won't block Claude, but it generates noise/errors in every session until `/setup-wizard` generates the proper `.claude/settings.json`.
-- **Fix**: Remove the PostToolUse hook from `settings.local.json` — it belongs only in `settings.template.json` (which `/setup-wizard` reads and generates `settings.json` from). Or have `install.sh` exclude `settings.local.json`.
+### ~~C4. `settings.local.json` in template repo has literal `{{TYPE_CHECK_COMMAND}}` — PostToolUse hook will break~~ RESOLVED
+- **Resolution**: `install.sh` now removes `settings.local.json` after the bulk `.claude/` copy (`rm -f`). The hook with `{{TYPE_CHECK_COMMAND}}` exists only in `settings.template.json` (correct), and `settings.local.json` is project-owned and no longer copied to target projects.
 
-### C5. `execute-task` uses `git add -A` throughout — risks committing secrets and unwanted files
-- **Location**: `execute-task.md` lines 176, 260, 291, 319, 377-379, 411. Also `fix.md` lines 180, 219, 245, 273, 299, 325. Also `refactor.md` lines 220, 283, 309, 337, 365, 390.
-- **Problem**: `git add -A && git commit` is used for every checkpoint, WIP commit, doc commit, and repair commit. This adds ALL untracked and modified files including `.env`, credentials, large binaries, and IDE config.
-- **Impact**: Secrets or unwanted files get committed in WIP/checkpoint commits. Even though these get squashed, they remain in git reflog and can be recovered. Claude Code's own system prompt explicitly warns against `git add -A`.
-- **Fix**: Replace with specific file additions: `git add [list of files from task's Files section] .claude/wip.md`. For doc commits: `git add docs/ [source files]`. For checkpoint commits: `git add -A -- ':!.env*' ':!*.pem' ':!*.key'` (exclude common secret patterns).
+### ~~C5. `execute-task` uses `git add -A` throughout — risks committing secrets and unwanted files~~ RESOLVED
+- **Resolution**: All 18 `git add -A` instances replaced with scoped staging across `execute-task.md`, `fix.md`, `refactor.md`, and `verify.md`. Checkpoint commits no longer stage files (use `--allow-empty`). Work/repair/review commits stage only modified files. Doc/test commits scope to `docs/` or test files respectively.
 
-### C6. `execute-task` Phase 6 squash uses `git reset --soft` — rewrites history
-- **Location**: `execute-task.md` lines 411-416. Also `fix.md` lines 325-328. `refactor.md` lines 390-394.
-- **Problem**: Squashing WIP commits via `git reset --soft [hash] && git commit` rewrites git history. If the user pushed the branch (common when working on spec branches), this forces a `git push --force`.
-- **Impact**: Claude will execute the reset without checking if commits were pushed. In team environments this can destroy others' work.
-- **Fix**: Add a pre-squash check: "Before squashing, verify no WIP commits have been pushed: `git log --oneline origin/[branch]..HEAD`. If WIP commits exist on remote, skip squashing — the WIP commits become the final commits."
+### ~~C6. `execute-task` Phase 6 squash uses `git reset --soft` — rewrites history~~ RESOLVED
+- **Resolution**: All 3 squash sections (`execute-task.md`, `fix.md`, `refactor.md`) now check `git log --oneline origin/$(git branch --show-current)..HEAD` before squashing. If WIP commits were already pushed, squashing is skipped to avoid rewriting shared history.
 
-### C7. `/constitute` overwrites constitution.md entirely — losing ALL universal rules from the template
-- **Location**: `constitute.md` Phase 3 vs `constitution.template.md` sections 3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 6.1-6.4
-- **Problem**: The constitution template has extensive, carefully crafted universal rules: no dead code, SOLID/DRY/KISS principles, early returns, check-before-build, patterns with code examples, etc. But `/constitute` Phase 3 says "Write `constitution.md`" using a section structure — it does NOT instruct Claude to preserve the universal sections from the template.
-- **Impact**: Claude generates a fresh constitution that may lack the quality standards from the template. The universal rules (sections 3.5-3.7, 4.1-4.3, 6.1-6.4) — representing substantial engineering wisdom — get replaced with whatever Claude generates, which may be weaker, less specific, or missing entirely.
-- **Fix**: Add to `/constitute` Phase 3: "Read `.claude/templates/constitution.template.md`. Copy all sections tagged `[universal]` (3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 6.1-6.4) verbatim into the generated constitution. Only populate `[project-specific]` sections from analysis/interview."
+### ~~C7. `/constitute` overwrites constitution.md entirely — losing ALL universal rules from the template~~ RESOLVED
+- **Resolution**: Phase 3 now instructs Claude to read `constitution.template.md` and copy all `[universal]` sections (3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 6.1-6.4) verbatim. The section structure was updated to include all 10 universal sections alongside project-specific sections.
 
 ---
 
