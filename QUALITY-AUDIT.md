@@ -57,11 +57,8 @@ Comprehensive quality audit of the AIDevTeamForge template system — a set of C
 ### ~~H4. Spec branch numbering and spec directory numbering use independent counters~~ RESOLVED
 - **Resolution**: Branch creation deferred from Phase 0.3 to Phase 4. The spec directory number (from scanning `specs/`) is now the single source of truth — the branch `spec/NNN-name` is created using the same NNN immediately before writing the spec file.
 
-### H5. `/verify` Phase 9 references `/commit` which doesn't exist
-- **Location**: `verify.md` Phase 9 (line 176)
-- **Problem**: Says "Ready for `/commit` or PR creation." There is no `/commit` slash command (neither built-in Claude Code nor custom). Claude Code has a built-in `/commit` skill via its system prompt but it's not a slash command in the same sense.
-- **Impact**: Claude may try to invoke it as a custom command and fail, or correctly interpret it as a suggestion to commit.
-- **Fix**: Change to: "Ready for commit (use `git add` + `git commit`) or PR creation."
+### ~~H5. `/verify` Phase 9 references `/commit` which doesn't exist~~ RESOLVED
+- **Resolution**: Changed to `Ready for commit (git add + git commit) or PR creation.` — no longer references a non-existent slash command.
 
 ### H6. `/fix` Phase 6 code review can trigger unlimited fix cycles
 - **Location**: `fix.md` lines 268-276
