@@ -385,6 +385,8 @@ If anything noteworthy happened during the fix, update `.claude/memory/MEMORY.md
 - **What caused it**: If the root cause reveals a systemic issue (e.g., "type definitions don't enforce required fields"), note it
 - **Fix approach**: If the diagnosis or fix involved a non-obvious technique, record it under What Worked
 
+Use the format: `- **[AREA]**: [observation] _(Task N / Feature NNN)_`. Add entries under the matching section in MEMORY.md (Known Pitfalls, What Worked, What Failed, External API Quirks, etc.).
+
 Keep entries concise (1-2 lines each). Only update if there's something genuinely useful for future work — not every bug fix needs a memory entry.
 
 ## IMPORTANT RULES

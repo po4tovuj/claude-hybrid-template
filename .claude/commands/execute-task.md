@@ -431,7 +431,9 @@ The task is now fully committed with a clean single commit and no WIP artifacts.
 
 ## PHASE 7: Memory Update
 
-If anything unexpected happened during execution (a gotcha, a pattern discovery, a near-mistake), update `.claude/memory/MEMORY.md` with a concise note.
+If anything unexpected happened during execution (a gotcha, a pattern discovery, a near-mistake), update `.claude/memory/MEMORY.md`.
+
+Use the format: `- **[AREA]**: [observation] _(Task N / Feature NNN)_`. Add entries under the matching section in MEMORY.md (Known Pitfalls, What Worked, What Failed, External API Quirks, etc.).
 
 ## PHASE 7.5: Context Maintenance
 

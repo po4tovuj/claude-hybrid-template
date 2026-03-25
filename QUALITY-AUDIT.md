@@ -51,11 +51,8 @@ Comprehensive quality audit of the AIDevTeamForge template system — a set of C
 ### ~~H2. `/breakdown` agent assignment table only covers 6 of 14 agent types~~ RESOLVED
 - **Resolution**: Added 5 execution-capable agent types to the assignment table: db-engineer, api-designer, devops-engineer, migration-engineer, design-auditor. The remaining 3 (tech-writer, qa-engineer, code-reviewer) are verification agents that run automatically and don't need task assignment rows.
 
-### H3. Memory updates have no defined format — becomes unstructured noise
-- **Location**: `execute-task.md` Phase 7, `fix.md` Phase 9, `refactor.md` Phase 9, `verify.md` Phase 8
-- **Problem**: All say "update MEMORY.md" but none specifies the format. The template `memory.template.md` defines sections (Known Pitfalls, What Worked, etc.) but commands just say "add a concise note."
-- **Impact**: After 10+ tasks, MEMORY.md is an unstructured dump. Different sessions format entries differently. Claude reads it but extracts little value.
-- **Fix**: Define format in each command: "Add to the appropriate section in MEMORY.md using the format: `- **[AREA]**: [observation] _(Task N / Feature NNN)_`"
+### ~~H3. Memory updates have no defined format — becomes unstructured noise~~ RESOLVED
+- **Resolution**: All 4 commands (execute-task Phase 7, fix Phase 9, refactor Phase 9, verify Phase 8) now include the standardized format: `- **[AREA]**: [observation] _(Task N / Feature NNN)_` with instruction to add entries under the matching MEMORY.md section.
 
 ### H4. Spec branch numbering and spec directory numbering use independent counters
 - **Location**: `specify.md` lines 35-39 (branches scan `git branch`) vs line 130 (directories scan `specs/`)

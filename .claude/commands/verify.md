@@ -167,6 +167,8 @@ Update `.claude/memory/MEMORY.md` with lessons learned from this feature:
 - **New patterns**: Any new code patterns introduced that should be followed in future work
 - **Pitfalls**: Gotchas discovered that should be avoided in similar work
 
+Use the format: `- **[AREA]**: [observation] _(Task N / Feature NNN)_`. Add entries under the matching section in MEMORY.md (Known Pitfalls, What Worked, What Failed, External API Quirks, etc.).
+
 Keep memory entries concise (1-2 lines each). Link to specific files if relevant.
 
 ## PHASE 9: Present Results
