@@ -60,11 +60,8 @@ Comprehensive quality audit of the AIDevTeamForge template system — a set of C
 ### ~~H5. `/verify` Phase 9 references `/commit` which doesn't exist~~ RESOLVED
 - **Resolution**: Changed to `Ready for commit (git add + git commit) or PR creation.` — no longer references a non-existent slash command.
 
-### H6. `/fix` Phase 6 code review can trigger unlimited fix cycles
-- **Location**: `fix.md` lines 268-276
-- **Problem**: If code-reviewer returns BLOCK, the instruction says "Apply the required fixes, Re-run verification." No iteration limit. Phase 5 has a 3-attempt repair loop, but Phase 6's review-triggered fixes have no limit. Claude could loop: fix → review → BLOCK → fix → review → BLOCK...
-- **Impact**: Context exhaustion from an infinite loop of review-triggered changes.
-- **Fix**: Add: "If the code-reviewer returns BLOCK, apply fixes and re-verify (max 1 additional review cycle). If still BLOCKED, report to the user."
+### ~~H6. `/fix` Phase 6 code review can trigger unlimited fix cycles~~ RESOLVED
+- **Resolution**: Phase 6 now specifies max 1 additional review cycle when code-reviewer returns BLOCK. If still blocked after that cycle, execution stops and reports to the user.
 
 ### H7. Date format inconsistency across commands
 - **Location**: Multiple files

@@ -266,13 +266,14 @@ Provide the agent with:
 
 The agent will check: constitution compliance, architecture & patterns, type safety, security basics, code quality, and memory pitfalls.
 
-**If the agent returns BLOCK or critical issues**:
+**If the agent returns BLOCK or critical issues** (max 1 additional review cycle):
 - Apply the required fixes
 - Re-run verification (Phase 5 checks)
 - Commit:
   ```
   git add [files you modified] .claude/wip.md && git commit -m "[WIP] Fix: [short description] — review fixes"
   ```
+- If still BLOCKED after this additional cycle, STOP and report the remaining issues to the user. Do not attempt further review cycles.
 
 **If the agent returns APPROVE or only warnings/info** → proceed to Phase 7.
 
