@@ -35,7 +35,7 @@ After Phase 7.5 completes for the current task:
         🔴 CONTEXT HEALTH PAUSE — [N] tasks completed this session (heavy context load).
         Strongly recommended: Run /compact before continuing.
 
-        /compact Preserve: (1) Current task statuses from specs/[feature]/tasks/README.md, (2) All entries from .claude/memory/MEMORY.md, (3) Constitution rules referenced during this session, (4) Next task's file list and change details from its task file, (5) Session state from .claude/session-state.md, (6) Phase 5 documentation obligation: every task runs the tech-writer agent and verifies docs before Phase 6. Discard: file contents already committed, old error outputs, superseded diffs, resolved discussions.
+        /compact Preserve: (1) Current task statuses from specs/[feature]/tasks/README.md, (2) All entries from .claude/memory/MEMORY.md, (3) Constitution rules referenced during this session, (4) Next task's file list and change details from its task file, (5) Session state from .claude/session-state.md, (6) Phase 5 documentation obligation: every task runs the tech-writer agent and verifies docs before Phase 6, (7) Completion Notes sections from all completed task files in specs/[feature]/tasks/ — these contain prior decisions, actual files changed, and deviations that inform later tasks. Discard: file contents already committed, old error outputs, superseded diffs, resolved discussions.
 
         Then resume with: /execute-task [remaining-task-ids]
         ```

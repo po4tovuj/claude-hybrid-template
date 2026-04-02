@@ -72,7 +72,7 @@ Then, build the **task queue** based on `$ARGUMENTS`:
 - Task queue = those tasks in the given order
 - Validate each task exists and is not already Complete
 
-**If `$ARGUMENTS` contains `-` but no `/`** (e.g. `1-5`):
+**If `$ARGUMENTS` matches the pattern `number-number`** (e.g. `1-5`, `01-10` — both parts must be numeric):
 - Parse as range: start number to end number (inclusive)
 - Task queue = expanded range in order
 - Skip any tasks in the range that are already Complete
@@ -82,6 +82,17 @@ Then, build the **task queue** based on `$ARGUMENTS`:
 
 **If `$ARGUMENTS` is empty**:
 - Task queue = `[next pending task]` (lowest number with all dependencies satisfied)
+
+**If `$ARGUMENTS` matches none of the above patterns**:
+- STOP with: "Unrecognized argument format: `[input]`. Expected: a task number (e.g. `3`), range (`1-5`), comma list (`1,3,5`), `all`, or feature/task (`001/3`)."
+
+### 1.1.1: Validate Task Queue
+
+After building the task queue, validate every task number in it before proceeding:
+
+1. For each task number in the queue, check that a matching task file exists in `specs/NNN-feature/tasks/` (glob for `NNN-*.md` where NNN matches the task number, zero-padded).
+2. If any task number has no matching file, STOP with: "Task [N] does not exist in `specs/[feature]/tasks/`. Available tasks: [list available task numbers and titles]."
+3. If the task queue is empty after filtering (e.g., all tasks in a range are already Complete), inform the user: "No pending tasks match the requested range/selection."
 
 For multi-task queues: the current task is always the first item. After it completes (Phase 7.5), the remaining queue is processed via the Multi-Task Continuation phase (Phase 8).
 
@@ -102,6 +113,7 @@ For multi-task queues: the current task is always the first item. After it compl
 5. Read `.claude/memory/MEMORY.md`
 6. Read files listed in the task's "Files" section. If total estimated lines exceed 500, read only the sections relevant to the change (use Change Details to identify which functions/blocks to focus on). For smaller file sets, read them fully.
 7. **Read referenced documentation**: If the task file has a `Context docs` field with specific file paths, read those files. Do not search `docs/` broadly — the breakdown already identified which docs are relevant for this task.
+8. **Read prior task completion notes**: For each completed task in this feature (check task index for tasks with Status: Complete), read the `## Completion Notes` section from their task file. This provides context about what earlier tasks decided, which files they actually changed, and any deviations from the plan. For features with many completed tasks (10+), read only the completion notes from tasks listed in the current task's "Depends on" field and the 3 most recently completed tasks.
 
 Verify:
 - Task exists and is not already completed
