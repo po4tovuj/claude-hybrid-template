@@ -161,7 +161,7 @@ For each task, generate a `## Contracts` section with `### Expects` and `### Pro
 - **Produces (postconditions)**: What must be true in the codebase after this task completes. These are independently verified by `/execute-task` via grep/read.
 
 **Rules**:
-- 2-5 items per section. Keep them concrete and grep-verifiable.
+- 2-5 items per section. Keep them concrete and code-verifiable (verifiable by reading the source file).
 - Reference **semantic identifiers** (function names, export names, interface names, field names) — never line numbers. Line numbers shift as earlier tasks modify files.
 - Examples of good contracts:
   - `src/types/Cart.ts` exports interface `CartTotals` with fields `subtotal: number`, `total: number`
@@ -171,7 +171,7 @@ For each task, generate a `## Contracts` section with `### Expects` and `### Pro
 - Examples of bad contracts:
   - "Cart totals work correctly" (not verifiable)
   - "Line 45 of CartBLoC.ts returns the right value" (line numbers shift)
-  - "Performance is acceptable" (not grep-verifiable)
+  - "Performance is acceptable" (not code-verifiable)
 
 ### Doc Reference Rules
 
