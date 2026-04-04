@@ -248,6 +248,16 @@ The `tech-writer` agent is hardcoded to `sonnet` regardless of tier choices — 
 
 (Default to "Auto" for frontend/fullstack, "Off" for library/CLI if user skips.)
 
+**Conditional: Chrome DevTools MCP** (if Auto or Browser only):
+Add the chrome-devtools MCP server to `.mcp.json`:
+```json
+"chrome-devtools": {
+  "command": "./scripts/chrome-devtools-mcp.sh",
+  "args": []
+}
+```
+If AC_VERIFICATION is "off" or "api-only", do NOT add chrome-devtools to `.mcp.json` — it would be useless for these projects.
+
 ## STEP 3: Generate Configuration Files
 
 Based on detection + user answers, generate ALL of the following files. Read each template from `.claude/templates/`, fill in the placeholders, and write the output files.
