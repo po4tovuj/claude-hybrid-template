@@ -103,7 +103,7 @@ Run these once when you first install the template:
 - **`/breakdown`** — Ordered atomic tasks with dependencies, agent assignments (via shared `_agent-assignment.md`), and cross-task contracts (Expects/Produces). Review checkpoints at convergence points. **Requires approval.**
 - **`/execute-task`** — 6-phase per-task workflow: load context → pre-flight (contracts) → execute (agent + verify + code review) → complete → bookkeeping. Code review findings reported to user per task. WIP commits accumulate — squashed by `/verify`.
   - `/execute-task` — next pending | `/execute-task 3` — specific | `/execute-task 1-5` — range | `/execute-task all` — all pending
-- **`/verify`** — AC verification + cross-task integration check + feature docs (tech-writer) + security + performance review. Feature squash via `git merge-base`. Issues reported with batch bug filing. Auto-triggers `/summarize` on APPROVED.
+- **`/verify`** — AC verification + cross-task integration check + feature docs (tech-writer) + security review + performance review + test coverage assessment. Feature squash via `git merge-base`. Issues reported with batch bug filing. Auto-triggers `/summarize` on APPROVED.
 - **`/summarize`** — PR-ready feature summary. Runs automatically after `/verify` approves.
 
 ### Standalone Commands (use anytime)
