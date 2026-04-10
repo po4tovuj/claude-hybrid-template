@@ -5,6 +5,21 @@ All notable changes to this template will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0] - 2026-04-10
+
+### Added
+- **`/audit` command** — standalone, on-demand adversarial whole-codebase audit for periodic "second opinion" quality reviews. Launches code-reviewer, architect, qa-engineer, and security-reviewer in ADVERSARIAL MODE to hunt for mislogic (naming-vs-behavior mismatches, lying comments, off-by-one errors, dead branches, cross-file contradictions, contradictory configs), with a structured Mislogic Hunt Checklist of 9 pattern categories. Supports `--full` (default), `--uncommitted`, file path, or directory scope. Reads up to 5 recent `specs/*/review.md` files (last 90 days) to track recurring/unresolved issues across features. Writes dated reports to `audits/YYYY-MM-DD-audit.md` and prints inline summary. Read-only, not auto-committed, **not part of any workflow chain** — invoke manually after several specs ship
+  - **Anti-hallucination grounding**: every finding must include a verbatim Evidence quote from the actual code; Phase 4.2 validation re-reads each cited file and discards findings whose quote does not appear there (fabrication guard). Discard counts surfaced in the report's Methodology section so users can detect when agents drift toward fabrication
+  - **Stream-consolidation**: agents write to `audits/.tmp-{agent}.md`; the parent reads and deletes one at a time to avoid context exhaustion (the failure mode that motivated `/verify`'s split into `/review` + `/verify` + `/finalize` in 1.27.0)
+  - **Algorithmic merging only**: cross-agent consensus and recurring-issue tags use exact-match hash keys, never LLM "is this similar" judgment, to prevent confabulated consensus
+  - **Adversarial Preamble** wraps each agent invocation with explicit "false positive vs fabrication" rules + closing mode reminder injected as the last instruction so the most-recent prompt wins over the agent's baked-in polite tone. Adversarial mode lives in `audit.md` only — `/review`, `/verify`, `/execute-task`, `/fix`, `/refactor` continue using the normal professional tone
+  - Two-batch parallel agent launch (code-reviewer + architect, then qa-engineer + security-reviewer) with module-subagent fan-out for 200+ file codebases
+  - Hard-stops with clear messages when no audit-capable agents are installed or when `constitution.md` is unpopulated
+  - 14 IMPORTANT RULES enforce read-only behavior, grounded adversarial bias, algorithmic merging, dated non-overwriting reports, agent failure resilience, and wrapper-mode awareness
+
+### Changed
+- Template version: 1.27.0 → 1.28.0
+
 ## [1.27.0] - 2026-04-08
 
 ### Added

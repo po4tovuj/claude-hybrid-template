@@ -6,7 +6,7 @@ A reusable spec-driven development template for Claude Code. Combines a structur
 
 ## What's Built
 
-### Commands (19 commands + 5 shared partials in `.claude/commands/`)
+### Commands (20 commands + 5 shared partials in `.claude/commands/`)
 - `setup-wizard.md` — Interactive project setup, auto-detects stack or interviews for greenfield; saves baselines for three-way merge on first run; detects DEFAULT_BRANCH; conditionally adds Chrome MCP based on AC_VERIFICATION setting
 - `constitute.md` — Generates constitution from codebase analysis (existing) or interview (greenfield)
 - `onboard.md` — Deep codebase scan for existing projects, generates comprehensive `docs/` via tech-writer agent
@@ -24,6 +24,7 @@ A reusable spec-driven development template for Claude Code. Combines a structur
 - `refactor.md` — Focused refactoring workflow: analyze → propose → approve → delegate to agent → verify → code review → test → doc update, with auto-selected agent via `_agent-assignment.md`, code-reviewer, qa-engineer, and tech-writer agents
 - `refresh-docs.md` — Lightweight documentation refresh using git delta; invokes tech-writer in Refresh Mode on changed files only
 - `security.md` — On-demand security review: targeted (file, directory, uncommitted changes) or full codebase (`--full`). Launches security-reviewer agent with constitution context. Module-based subagents for large codebases. Read-only
+- `audit.md` — Standalone adversarial whole-codebase audit for periodic "second opinion" reviews. Launches code-reviewer + architect + qa-engineer + security-reviewer in adversarial mode with a structured Mislogic Hunt Checklist; reads recent `specs/*/review.md` for recurring-issue tracking. Anti-hallucination grounding via verbatim Evidence requirement + Phase 4 validation that re-reads cited files and discards ungrounded findings. Algorithmic-only cross-agent and recurring merging (no LLM similarity judgment). Writes dated reports to `audits/YYYY-MM-DD-audit.md`. Read-only, not auto-committed, NOT part of any workflow chain — invoke manually
 - `release.md` — Meta-command for the template repo itself: automates version bump, changelog, and documentation updates after making changes
 
 Shared partials (`_`-prefixed, loaded on-demand by parent commands):

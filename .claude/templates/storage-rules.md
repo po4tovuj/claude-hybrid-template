@@ -11,6 +11,10 @@ bugs/
 research/
   YYYY-MM-DD-[topic-slug].md          # Research reports (/research) — exploratory, pre-spec
 
+audits/
+  YYYY-MM-DD-audit.md                  # Adversarial codebase audits (/audit) — periodic, dated, not auto-committed
+  .gitignore                           # Auto-created on first /audit run (excludes .tmp-* files)
+
 specs/
   NNN-feature-name/                # One numbered directory per feature
     spec.md                        # Feature specification (/specify)
@@ -126,6 +130,7 @@ Each task file (`specs/NNN-feature/tasks/NNN-title.md`) contains:
 /finalize     → squashes WIP commits, generates feature docs in docs/
 /report-bug   → creates bugs/NNN-description.md
 /fix          → updates bugs/NNN-description.md status to Fixed (when given a bug file)
+/audit        → creates audits/YYYY-MM-DD-audit.md (dated, not overwritten; standalone, not in workflow chain)
 ```
 
 ## Status Tracking
