@@ -254,3 +254,7 @@ After running `/setup-wizard`:
 ## Template Files
 
 The `.claude/templates/` directory contains raw templates with `{{PLACEHOLDER}}` variables. Consumed by `/setup-wizard` and can be deleted after setup.
+
+## License
+
+MIT
